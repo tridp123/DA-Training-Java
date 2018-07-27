@@ -1,11 +1,13 @@
 package com.springjpa.service.impl;
 
-
 import java.sql.Timestamp;
+import java.util.UUID;
 
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
+//import org.springframework.transaction.annotation.Transactional;
 //import org.springframework.transaction.annotation.Transactional;
 
 //import com.querydsl.core.types.Predicate;
@@ -19,19 +21,20 @@ import com.springjpa.repository.LocationCasRepository;
 import com.springjpa.repository.LocationRepository;
 import com.springjpa.service.BaseService;
 import com.springjpa.service.LocationService;
+import com.springjpa.util.DataTimeUtil;
 
 @Service
 public class LocationServiceImpl extends BaseService implements LocationService {
 
 	@Autowired
 	LocationCasRepository locationRepository;
-	
+
 	@Autowired
 	LocationRepository jpaRepository;
-	
+
 	public LocationServiceImpl() {
 	}
-	
+
 	@Override
 	public Iterable<LocationCas> getAllLocations() {
 		return locationRepository.findAll();
@@ -47,56 +50,49 @@ public class LocationServiceImpl extends BaseService implements LocationService 
 		return jpaRepository.save(location);
 	}
 
-//	@Override
-//	@Transactional(readOnly = true)
-//	public Location getOneLocationByQueryDslFromJpa(Predicate predicate) {
-//		Location result = jpaRepository.findOne(predicate);
-//		if (result==null) {
-//			throw new NoDataFoundException("Not found data in DB");
-//		}
-//		return result;
-//	}
-//
-//	@Override
-//	@Transactional(readOnly = true)
-//	public List<Location> getLocationByQueryDslFromJpa(Predicate predicate) {
-//		List<Location> list = new ArrayList<>();
-//		jpaRepository.findAll(predicate).forEach(list::add);
-//		return list;
-//	}
-	public LocationDTO convertToDTO(Object obj, DBType type) {
-		LocationDTO dto = null;
-		if (obj == null) {
-			throw new NoDataFoundException("Not found location");
+	@Override
+	public Location updateLocation(Location location) {
+		if ((jpaRepository.findOne(location.getLocation_id()) == null)) {
+			throw new NoDataFoundException("Location ID '" + location.getLocation_id() + "' not found in DB");
 		}
-		if (type == DBType.JPA) {
-			Location location = (Location) obj;
-			dto = new LocationDTO(location.getLocation_id(), location.getCountry(), location.getCity(), new DateTime(location.getCreatedAt()), new DateTime(location.getModifiedAt()));
-		} else if (type == DBType.CASSANDRA) {
-			LocationCas location = (LocationCas) obj;
-			dto = new LocationDTO(location.getLocationId(), location.getCountry(), location.getCity(),
-					location.getCreatedAt(), location.getModifiedAt());
-		} else {
-			throw new BadRequestException("No type");
-		}
-		return dto;
-	}
-
-	public Location convertToJPAEntity(LocationDTO dto) {
-		if (dto == null) {
-			throw new BadRequestException("Parameters not valid");
-		}
-		Location location = new Location(dto.getLocationId(), dto.getCountry(), dto.getCity(), new Timestamp(dto.getCreatedAt().getMillis()),new Timestamp(dto.getModifiedAt().getMillis()));
-		return location;
+		location.setModifiedAt(new Timestamp(DataTimeUtil.getCurrent().getMillis()));
+		return jpaRepository.save(location);
 	}
 
 
-	public LocationCas convertToCassandraEntity(LocationDTO dto) {
-		if (dto == null) {
-			throw new BadRequestException("Parameters not valid");
-		}
-		LocationCas location = new LocationCas(dto.getLocationId(), dto.getCountry(), dto.getCity(),
-				dto.getCreatedAt(), dto.getModifiedAt());
-		return location;
+	@Override
+	public boolean deleteAllLocation() {
+		// TODO Auto-generated method stub
+		return false;
 	}
+
+	
+	@Override
+	public boolean isExistsLocation(LocationCas locationCas) {
+		boolean result = false;
+		for (LocationCas lo : getAllLocations()) {
+			if (lo.equals(locationCas)) {
+				result = true;
+				break;
+			}
+		}
+		return result;
+	}
+
+	@Override
+	public LocationCas findByCountry(String country) {
+		for (LocationCas lo : getAllLocations()) {
+			if (lo.getCountry().equals(country)) {
+				return lo;
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public boolean deleteLocationByCountry(String country) {
+		
+		return false;
+	}
+
 }

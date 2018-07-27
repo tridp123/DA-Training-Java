@@ -19,7 +19,7 @@ public class Location implements Serializable {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private UUID location_id;
+	private UUID locationId;
 	private String country;
 	private String city;
 	private Timestamp created_at;
@@ -31,7 +31,7 @@ public class Location implements Serializable {
 	
 	public Location(UUID location_id, String country, String city, Timestamp created_at, Timestamp modified_at) {
 		super();
-		this.location_id = location_id;
+		this.locationId = location_id;
 		this.country = country;
 		this.city = city;
 		this.created_at = created_at;
@@ -42,11 +42,11 @@ public class Location implements Serializable {
 	@GeneratedValue
 	@Column(name = "location_id", table = "location", unique = true, nullable = false)
 	public UUID getLocation_id() {
-		return location_id;
+		return locationId;
 	}
 
 	public void setLocation_id(UUID location_id) {
-		this.location_id = location_id;
+		this.locationId = location_id;
 	}
 
 	@Column(name = "country", nullable = false)
@@ -87,7 +87,7 @@ public class Location implements Serializable {
 
 	@Override
 	public String toString() {
-		return "Location [location_id=" + location_id + ", country=" + country + ", city=" + city + ", created_at="
+		return "Location [location_id=" + locationId + ", country=" + country + ", city=" + city + ", created_at="
 				+ created_at + ", modified_at=" + modified_at + "]";
 	}
 

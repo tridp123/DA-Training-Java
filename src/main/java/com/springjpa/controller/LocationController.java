@@ -1,6 +1,10 @@
 package com.springjpa.controller;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.UUID;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -9,10 +13,18 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import com.springjpa.dto.LocationDTO;
 import com.springjpa.exception.BadRequestException;
@@ -22,6 +34,7 @@ import com.springjpa.model.cassandra.LocationCas;
 import com.springjpa.model.jpa.Location;
 import com.springjpa.service.LocationService;
 import com.springjpa.service.impl.LocationServiceImpl;
+import com.springjpa.util.DataTimeUtil;
 
 @RestController
 @RequestMapping(value = "/location")
@@ -32,43 +45,53 @@ public class LocationController {
 	@Autowired
 	LocationService locationRepository = new LocationServiceImpl();
 
+	// -------------------Retrieve All
+	// location--------------------------------------------------------
 	@GetMapping(value = "/getalllocation", headers = "Accept=application/json")
-	public ResponseEntity<LocationCas> getAllLocations() {
-		String result = "List location is retrieved from Cassandra DB: " + "</br>";
-		for (LocationCas lo : locationRepository.getAllLocations()) {
-
-			LocationDTO dto = locationRepository.convertToDTO(lo, DBType.CASSANDRA);
-			dto.getCreatedAt().withZone(DateTimeZone.UTC);
-
-			Location add = locationRepository.convertToJPAEntity(dto);
-			Location r = locationRepository.saveLocationJPA(add);
-			result += r.toString();
-		}
-		HttpHeaders headers = new HttpHeaders();
-		headers.add("Location", "http://localhost:8080/location=" + result);
-
-		return new ResponseEntity<LocationCas>(headers,HttpStatus.OK);
+	public ResponseEntity<List<LocationDTO>> getAllLocations() {
+		List<LocationDTO> list = convertListLocationCas(locationRepository.getAllLocations());
+		return new ResponseEntity<List<LocationDTO>>(list, HttpStatus.OK);
 	}
 
-//	@PostMapping(value = "/add", headers = "Accept=application/json")
-//	public ResponseEntity<LocationDTO> addLocation(@RequestBody LocationDTO location) {
-//		
-//		LocationDTO result = convertToDTO(service.addLocation(convertToJPAEntity(location)), DBType.JPA);
-//		
-//		HttpHeaders headers = new HttpHeaders();
-//		
-//		//add in response header
-//		headers.add("Location", "http://localhost:8080/location?id=" + result.getLocationId());
-//		
-//		return new ResponseEntity<LocationDTO>(result, headers, HttpStatus.CREATED);
-//	}
-//
+	// -------------------Retrieve Single location by
+	// Country--------------------------------------------------------
+	@RequestMapping(value = "/getlocation/{country}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<LocationDTO> getLocation(@PathVariable("country") String country) {
+		System.out.println("Fetching location with country " + country);
+		LocationDTO locationDTO = convertToDTO(locationRepository.findByCountry(country), DBType.CASSANDRA);
+
+		if (locationDTO == null) {
+			System.out.println("Location with id " + locationDTO.getLocationId() + " not found");
+			return new ResponseEntity<LocationDTO>(HttpStatus.NOT_FOUND);
+		}
+		System.out.println("location DTO return: " + locationDTO.getCity());
+		return new ResponseEntity<LocationDTO>(locationDTO, HttpStatus.OK);
+	}
+	
+	@RequestMapping(value = "/addlocation/add", method = RequestMethod.POST)
+	public ResponseEntity<LocationDTO> createLocation(@RequestParam String country, @RequestParam String city,
+			UriComponentsBuilder ucBuilder) {
+		LocationCas cas = new LocationCas(UUID.randomUUID(), country, city, DataTimeUtil.getCurrent(),
+				DataTimeUtil.getCurrent());
+
+		if (locationRepository.isExistsLocation(cas)) {
+			System.out.println("A location with name " + cas.getCountry() + " already exist");
+			return new ResponseEntity<LocationDTO>(HttpStatus.CONFLICT);
+		}
+		LocationCas a = locationRepository.saveLocationCas(cas);
+
+		HttpHeaders headers = new HttpHeaders();
+		headers.setLocation(ucBuilder.path("/location/getlocation/{country}").buildAndExpand(a.getCountry()).toUri());
+		return new ResponseEntity<LocationDTO>(convertToDTO(a, DBType.CASSANDRA), headers, HttpStatus.CREATED);
+	}
+
 //	@PutMapping(value = "/update", headers = "Accept=application/json")
 //	public ResponseEntity<LocationDTO> updateLocation(@RequestBody LocationDTO location) {
 //		HttpHeaders headers = new HttpHeaders();
 //		headers.add("Location", "http://localhost:8080/location?id=" + location.getLocationId());
 //		return new ResponseEntity<LocationDTO>(
-//				convertToDTO(service.updateLocation(convertToJPAEntity(location)), DBType.JPA), headers, HttpStatus.OK);
+//				convertToDTO(locationRepository.updateLocation(convertToJPAEntity(location)), DBType.JPA), headers,
+//				HttpStatus.OK);
 //	}
 
 //	@GetMapping(value = "/jpa/querydsl")
@@ -127,6 +150,32 @@ public class LocationController {
 			throw new BadRequestException("No type");
 		}
 		return dto;
+	}
+
+	public List<LocationDTO> convertListLocationCas(Iterable<LocationCas> list) {
+		List<LocationDTO> listDTO = new ArrayList<>();
+		if (list == null) {
+			throw new NoDataFoundException("Not found location");
+		}
+		for (LocationCas lo : list) {
+			LocationDTO dto = convertToDTO(lo, DBType.CASSANDRA);
+			dto.getCreatedAt().withZone(DateTimeZone.UTC);
+			listDTO.add(dto);
+		}
+		return listDTO;
+	}
+
+	public List<LocationDTO> convertListLocationJPA(Iterable<Location> list) {
+		List<LocationDTO> listDTO = new ArrayList<>();
+		if (list == null) {
+			throw new NoDataFoundException("Not found location");
+		}
+		for (Location lo : list) {
+			LocationDTO dto = convertToDTO(lo, DBType.JPA);
+			dto.getCreatedAt().withZone(DateTimeZone.UTC);
+			listDTO.add(dto);
+		}
+		return listDTO;
 	}
 
 	public Location convertToJPAEntity(LocationDTO dto) {

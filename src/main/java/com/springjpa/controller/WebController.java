@@ -13,8 +13,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
+import org.springframework.web.bind.annotation.RequestMapping;
 import com.springjpa.dto.LocationDTO;
+import com.springjpa.exception.BadRequestException;
+import com.springjpa.exception.NoDataFoundException;
 import com.springjpa.model.DBType;
 import com.springjpa.model.cassandra.LocationCas;
 import com.springjpa.model.jpa.Location;
@@ -32,22 +34,15 @@ public class WebController {
 
 	@RequestMapping("/save")
 	public String process() {
-		// save a single Customer
-		DateTime dt = new DateTime(DateTimeZone.forID("UTC"));
-		Timestamp ts = new Timestamp(dt.getMillis());
-
-//		repository.save(new Customer("Jack", "Smith", ts));
-
 		// save a Location info Cassandra
-//		locationRepository
-//				.save(new LocationCas(UUID.randomUUID(), "VietNamese", "Ho Chi Minh", DateTime.now(), DateTime.now()));
+		// sample data
+		LocationCas l1 = new LocationCas(UUID.randomUUID(), "USA", "New York", DataTimeUtil.getCurrent(), DataTimeUtil.getCurrent());
+		LocationCas l2 = new LocationCas(UUID.randomUUID(), "Japan", "Tokyo", DataTimeUtil.getCurrent(), DataTimeUtil.getCurrent());
+		LocationCas l3 = new LocationCas(UUID.randomUUID(), "Laos", "Vieng Chan", DataTimeUtil.getCurrent(), DataTimeUtil.getCurrent());
 
-		Location result = locationRepository.saveLocationJPA(new Location(UUID.randomUUID(), "Korea", "Gamnam", ts, ts));
-		System.out.println("location da luu:" + result.toString());
-
-		// save a list of Customers
-//		repository.save(Arrays.asList(new Customer("Adam", "Johnson"), new Customer("Kim", "Smith"),
-//				new Customer("David", "Williams"), new Customer("Peter", "Davis")));
+		locationRepository.saveLocationCas(l1);
+		locationRepository.saveLocationCas(l2);
+		locationRepository.saveLocationCas(l3);
 
 		return "Done";
 	}
@@ -56,14 +51,14 @@ public class WebController {
 	public String saveLocation() {
 		System.out.print("location save:");
 		for (LocationCas lo : locationRepository.getAllLocations()) {
-			
+
 			System.out.print("location test: " + lo.toString());
 
-			LocationDTO dto = locationRepository.convertToDTO(lo, DBType.CASSANDRA);
+			LocationDTO dto = convertToDTO(lo, DBType.CASSANDRA);
 			dto.getCreatedAt().withZone(DateTimeZone.UTC);
 			System.out.print("location dto: " + dto.toString());
-			
-			Location add = locationRepository.convertToJPAEntity(dto);
+
+			Location add = convertToJPAEntity(dto);
 			Location result = locationRepository.saveLocationJPA(add);
 			System.out.println(result.toString());
 		}
@@ -82,33 +77,46 @@ public class WebController {
 
 		return result;
 	}
-//
-//	@RequestMapping("/findall")
-//	public String findAll() {
-//		String result = "";
-//
-//		for (Customer cust : repository.findAll()) {
-//			result += cust.toString() + "<br>";
-//		}
-//
-//		return result;
-//	}
-//
-//	@RequestMapping("/findbyid")
-//	public String findById(@RequestParam("id") long id) {
-//		String result = "";
-//		result = repository.findOne(id).toString();
-//		return result;
-//	}
-//
-//	@RequestMapping("/findbylastname")
-//	public String fetchDataByLastName(@RequestParam("lastname") String lastName) {
-//		String result = "";
-//
-//		for (Customer cust : repository.findByLastName(lastName)) {
-//			result += cust.toString() + "<br>";
-//		}
-//
-//		return result;
-//	}
+	
+	@RequestMapping("/findbycountry" )
+	public LocationDTO fetchDataByLastName(@RequestParam("country") String country) {
+		return convertToDTO(locationRepository.findByCountry(country), DBType.CASSANDRA);
+	}
+	
+	public LocationDTO convertToDTO(Object obj, DBType type) {
+		LocationDTO dto = null;
+		if (obj == null) {
+			throw new NoDataFoundException("Not found location");
+		}
+		if (type == DBType.JPA) {
+			Location location = (Location) obj;
+			dto = new LocationDTO(location.getLocation_id(), location.getCountry(), location.getCity(),
+					new DateTime(location.getCreatedAt()), new DateTime(location.getModifiedAt()));
+		} else if (type == DBType.CASSANDRA) {
+			LocationCas location = (LocationCas) obj;
+			dto = new LocationDTO(location.getLocationId(), location.getCountry(), location.getCity(),
+					location.getCreatedAt(), location.getModifiedAt());
+		} else {
+			throw new BadRequestException("No type");
+		}
+		return dto;
+	}
+
+	public Location convertToJPAEntity(LocationDTO dto) {
+		if (dto == null) {
+			throw new BadRequestException("Parameters not valid");
+		}
+		Location location = new Location(dto.getLocationId(), dto.getCountry(), dto.getCity(),
+				new Timestamp(dto.getCreatedAt().getMillis()), new Timestamp(dto.getModifiedAt().getMillis()));
+		return location;
+	}
+
+	public LocationCas convertToCassandraEntity(LocationDTO dto) {
+		if (dto == null) {
+			throw new BadRequestException("Parameters not valid");
+		}
+		LocationCas location = new LocationCas(dto.getLocationId(), dto.getCountry(), dto.getCity(), dto.getCreatedAt(),
+				dto.getModifiedAt());
+		return location;
+	}
 }
