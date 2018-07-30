@@ -1,11 +1,11 @@
 package com.springjpa.service.impl;
 
-import java.util.UUID;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.springjpa.exception.NoDataFoundException;
 import com.springjpa.model.cassandra.ProductCas;
@@ -14,6 +14,7 @@ import com.springjpa.repository.ProductCasRepository;
 import com.springjpa.repository.ProductRepository;
 import com.springjpa.service.BaseService;
 import com.springjpa.service.ProductService;
+import com.springjpa.util.DataTimeUtil;
 
 @Service
 public class ProductServiceImpl extends BaseService implements ProductService {
@@ -24,89 +25,112 @@ public class ProductServiceImpl extends BaseService implements ProductService {
 	@Autowired
 	private ProductRepository jpaRepository;
 
+	public ProductServiceImpl() {
+	}
+
 	@Override
-	@Transactional(readOnly = true)
-	public Iterable<ProductCas> getAllProducts() {
+	public Iterable<ProductCas> getAllProduct() {
 		return cassRepository.findAll();
 	}
 
 	@Override
-	@Transactional(readOnly = true)
-	public ProductCas getProductByItem(int item) {
-		return cassRepository.getProductByItem( item);
-	}
-
-	@Override
-	@Transactional(readOnly = true)
-	public ProductCas getProductById(UUID id) {
-		ProductCas product = cassRepository.findOneByProductId(id);
-		if (product == null) {
-			throw new NoDataFoundException("Product ID '" + id + "' not found in DB");
-		}
-		return product;
-	}
-
-//	@Override
-//	@PreAuthorize("hasRole('ADMIN')")
-//	@Transactional(readOnly = false)
-//	public Product addProduct(Product product) {
-//		product.setCreatedAt(DateTimeUtil.getCurrent());
-//		product.setModifiedAt(DateTimeUtil.getCurrent());
-//		return jpaRepository.save(product);
-//	}
-
-//	@Override
-//	@PreAuthorize("hasRole('ADMIN')")
-//	@Transactional(readOnly = false)
-//	public Product updateProduct(Product product) {
-//		if (!jpaRepository.findById(product.getProductId()).isPresent()) {
-//			throw new NoDataFoundException("Product ID '" + product.getProductId() + "' not found in DB");
-//		}
-//		product.setModifiedAt(DateTimeUtil.getCurrent());
-//		// int row = jpaRepository.setProductByProductId(product.getItem(),
-//		// product.getsClass(),
-//		// product.getInventory(), product.getModifiedAt(),
-//		// product.getProductId());
-//		return jpaRepository.save(product);
-//	}
-
-	@Override
-	@Transactional(readOnly = true)
-	public Iterable<Product> getAllProductsFromJpa() {
+	public Iterable<Product> getAllProductInJPA() {
 		return jpaRepository.findAll();
 	}
 
 	@Override
-	@Transactional(readOnly = true)
-	public Product getProductByIdFromJpa(UUID id) {
-		Product product = jpaRepository.findOne(id);
-		if (product==null) {
-			throw new NoDataFoundException("Product ID '" + id + "' not found in DB");
+	public List<ProductCas> findByClassInCas(String sClass) {
+		List<ProductCas> result = new ArrayList<>();
+		for (ProductCas lo : getAllProduct()) {
+			if (lo.getsClass().equals(sClass)) {
+				result.add(lo);
+			}
 		}
-		return product;
+		return result;
 	}
 
 	@Override
-	@Transactional(readOnly = false)
-	public void deleteProductById(UUID id) {
-		jpaRepository.delete(id);
+	public Product findByClassInJPA(String sClass) {
+		for (Product lo : getAllProductInJPA()) {
+			if (lo.getsClass().equals(sClass)) {
+				return lo;
+			}
+		}
+		return null;
 	}
 
-//	@Override
-//	@Transactional(readOnly = true)
-//	public List<Product> getProductByQueryDslFromJpa(Predicate predicate) {
-//		List<Product> list = new ArrayList<>();
-//		jpaRepository.findAll(predicate).forEach(list::add);
-//		return list;
-//	}
-//
-//	@Override
-//	@Transactional(readOnly = true)
-//	public Product getOneProductByQueryDslFromJpa(Predicate predicate) {
-//		Product result = jpaRepository.findOne(predicate);
-//		if (result==null) {
-//			throw new NoDataFoundException("Not found data in DB");
-//		}
-//		return result;
-//	}
+	@Override
+	public ProductCas saveProductCas(ProductCas productCas) {
+		return cassRepository.save(productCas);
+	}
+
+	@Override
+	public Product saveProductJPA(Product product) {
+		return jpaRepository.save(product);
+	}
+
+	@Override
+	public ProductCas updateProductInCas(ProductCas product, int item, String sClass, String inventory) {
+		if ((cassRepository.findOne(product.getProductId()) == null)) {
+			throw new NoDataFoundException("Product ID '" + product.getProductId() + "' not found in DB");
+		}
+		product.setItem(item);
+		product.setsClass(sClass);
+		product.setInventory(inventory);
+		product.setModifiedAt(DataTimeUtil.getCurrent());
+		return cassRepository.save(product);
+	}
+
+	@Override
+	public Product updateProductInJPA(Product product, int item, String sClass, String inventory) {
+		if ((jpaRepository.findOne(product.getProductId()) == null)) {
+			throw new NoDataFoundException("Product ID '" + product.getProductId() + "' not found in DB");
+		}
+		product.setItem(item);
+		product.setsClass(sClass);
+		product.setInventory(inventory);
+		product.setModifiedAt(new Timestamp(DataTimeUtil.getCurrent().getMillis()));
+		return jpaRepository.save(product);
+	}
+
+	@Override
+	public void deleteAllProductInCas() {
+		cassRepository.deleteAll();
+	}
+
+	@Override
+	public void deleteProductByClass(String sClass) {
+		for (ProductCas pro : getAllProduct()) {
+			if (pro.getsClass().equals(sClass)) {
+				cassRepository.delete(pro);
+			}
+		}
+	}
+
+	@Override
+	public boolean isExistsProductinCas(ProductCas productCas) {
+		boolean result = false;
+		for (ProductCas lo : getAllProduct()) {
+			if (lo.getItem()==productCas.getItem() && (lo.getsClass().equals(productCas.getsClass()))
+					&& (lo.getInventory().equals(productCas.getInventory()))) {
+				result = true;
+				break;
+			}
+		}
+		return result;
+	}
+
+	@Override
+	public boolean isExistsProductinJPA(Product product) {
+		boolean result = false;
+		for (Product pro : getAllProductInJPA()) {
+			if (pro.getItem() == product.getItem() && (pro.getsClass().equals(product.getsClass()))
+					&& (pro.getInventory().equals(product.getInventory()))) {
+				result = true;
+				break;
+			}
+		}
+		return result;
+	}
+
 }

@@ -1,29 +1,32 @@
 package com.springjpa.service;
 
-import java.util.UUID;
+import java.util.List;
 
 import com.springjpa.model.cassandra.ProductCas;
 import com.springjpa.model.jpa.Product;
 
 public interface ProductService {
 
-	public Iterable<ProductCas> getAllProducts();
+	// get
+	public Iterable<ProductCas> getAllProduct();
+	public Iterable<Product> getAllProductInJPA();
+	public List<ProductCas> findByClassInCas(String sClass);
+	public Product findByClassInJPA(String sClass);
 
-	public ProductCas getProductByItem(int item);
+	// add
+	public ProductCas saveProductCas(ProductCas productCas);
+	public Product saveProductJPA(Product product);
 
-	public ProductCas getProductById(UUID id);
+	// update
+	public ProductCas updateProductInCas(ProductCas product,int item, String sClass, String inventory);
+	public Product updateProductInJPA(Product Product, int item, String sClass, String inventory);
 
-//	public Product addProduct(Product product);
+	// dalete
+	public void deleteAllProductInCas();
 
-//	public Product updateProduct(Product product);
+	public void deleteProductByClass(String sClass);
 
-	public void deleteProductById(UUID id);
-	
-	public Iterable<Product> getAllProductsFromJpa();
-
-	public Product getProductByIdFromJpa(UUID id);
-	
-//	public Product getOneProductByQueryDslFromJpa(Predicate predicate);
-//	
-//	public List<Product> getProductByQueryDslFromJpa(Predicate predicate);
+	// check Product
+	public boolean isExistsProductinCas(ProductCas productCas);
+	public boolean isExistsProductinJPA(Product product);
 }

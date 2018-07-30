@@ -21,8 +21,8 @@ public class Product implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	private UUID productId;
-	private int item;
-	private String sClass;
+	private int item;//item number
+	private String sClass;// category
 	private String inventory;
 	private Timestamp createdAt;
 	private Timestamp modifiedAt;

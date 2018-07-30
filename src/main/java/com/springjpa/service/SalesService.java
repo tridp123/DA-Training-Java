@@ -1,14 +1,15 @@
 package com.springjpa.service;
 
 import com.springjpa.model.cassandra.SalesCas;
+import com.springjpa.model.jpa.Product;
+import com.springjpa.model.jpa.Sales;
 
 public interface SalesService {
-
-	public Iterable<SalesCas> getAllSales();
-
-//	public Sales addSale(Sales sales);
-//
-//	public Sales updateSale(Sales sales);
-
-//	public List<Sales> getSalesByQueryDslFromJpa(Predicate predicate);
+	
+	public Iterable<SalesCas> getAllSalse();
+	
+	public Sales saveSalesJPA(Sales sales);
+	
+	public Sales updateSalesInJPA(Sales sales,int dollars);
+	
 }

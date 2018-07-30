@@ -2,38 +2,27 @@ package com.springjpa.aspectj;
 
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.After;
-import org.aspectj.lang.annotation.AfterReturning;
-import org.aspectj.lang.annotation.AfterThrowing;
-import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Configuration;
-
 
 @Aspect
 @Configuration
 public class Aspectj {
-  @Before("execution(* com.springjpa.controller.*.*(..))")
-  public void logBefore(JoinPoint joinPoint) {
-    System.out.println("before method: " + joinPoint.getSignature().getName());
-  }
-  
 
+	@Before("execution(* com.springjpa.controller.*.*(..)) || execution(* com.springjpa.service.*.*(..))")
 
-//	@Pointcut("execution(* com.springjpa.controller.*(..))")
-//	public void doPointCut() {
-//	}
-//
-//	@Before(value = "doPointCut()", argNames = "joinPoint")
-//	public void before(JoinPoint joinPoint) {
-//		Logger logger = LoggerFactory.getLogger(joinPoint.getTarget().getClass());
-//		LogUtil.debug(logger, "Starting method " + joinPoint.getSignature().getName() + "().");
-//	}
-//
-//	@After(value = "doPointCut()", argNames = "joinPoint")
-//	public void after(JoinPoint joinPoint) {
-//		Logger logger = LoggerFactory.getLogger(joinPoint.getTarget().getClass());
-//		LogUtil.debug(logger, "Ending method " + joinPoint.getSignature().getName() + "().");
-//	}
+	public void logBefore(JoinPoint joinPoint) {
+		Logger logger = LoggerFactory.getLogger(joinPoint.getTarget().getClass());
+		logger.info("Before method: " + joinPoint.getSignature().getName());
+	}
+
+	@After("execution(* com.springjpa.controller.*.*(..)) || execution(* com.springjpa.service.*.*(..))")
+	public void logAfter(JoinPoint joinPoint) {
+		Logger logger = LoggerFactory.getLogger(joinPoint.getTarget().getClass());
+		logger.info("After method: " + joinPoint.getSignature().getName());
+	}
+
 }
-

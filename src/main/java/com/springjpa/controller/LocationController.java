@@ -2,7 +2,6 @@ package com.springjpa.controller;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 
@@ -15,11 +14,10 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -45,30 +43,51 @@ public class LocationController {
 	@Autowired
 	LocationService locationRepository = new LocationServiceImpl();
 
-	// -------------------Retrieve All
-	// location--------------------------------------------------------
-	@GetMapping(value = "/getalllocation", headers = "Accept=application/json")
-	public ResponseEntity<List<LocationDTO>> getAllLocations() {
+	/* get */
+	// -------------------Retrieve All location--------------------------------------------------------
+	@GetMapping(value = "/getalllocationcas", headers = "Accept=application/json")
+	public ResponseEntity<List<LocationDTO>> getAllLocationCas() {
 		List<LocationDTO> list = convertListLocationCas(locationRepository.getAllLocations());
+		return new ResponseEntity<List<LocationDTO>>(list, HttpStatus.OK);
+	}
+
+	@GetMapping(value = "/getalllocationjpa", headers = "Accept=application/json")
+	public ResponseEntity<List<LocationDTO>> getAllLocationJPA() {
+		List<LocationDTO> list = convertListLocationJPA(locationRepository.getAllLocationInJPA());
 		return new ResponseEntity<List<LocationDTO>>(list, HttpStatus.OK);
 	}
 
 	// -------------------Retrieve Single location by
 	// Country--------------------------------------------------------
-	@RequestMapping(value = "/getlocation/{country}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<LocationDTO> getLocation(@PathVariable("country") String country) {
+	@RequestMapping(value = "/getlocationcas/{country}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<List<LocationDTO>> getLocationCas(@PathVariable("country") String country) {
 		System.out.println("Fetching location with country " + country);
-		LocationDTO locationDTO = convertToDTO(locationRepository.findByCountry(country), DBType.CASSANDRA);
+		List<LocationCas> locationCas = locationRepository.findByCountryInCas(country);
+		List<LocationDTO> list = new ArrayList<>();
+		for (LocationCas cas : locationCas) {
+			list.add(convertToDTO(cas, DBType.CASSANDRA));
+		}
+		if (list == null) {
+			return new ResponseEntity<List<LocationDTO>>(HttpStatus.NOT_FOUND);
+		}
+		return new ResponseEntity<List<LocationDTO>>(list, HttpStatus.OK);
+	}
+
+	@RequestMapping(value = "/getlocationjpa/{country}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<LocationDTO> getLocationJPA(@PathVariable("country") String country) {
+		System.out.println("Fetching location with country " + country);
+		LocationDTO locationDTO = convertToDTO(locationRepository.findByCountryInJPA(country), DBType.JPA);
 
 		if (locationDTO == null) {
 			System.out.println("Location with id " + locationDTO.getLocationId() + " not found");
 			return new ResponseEntity<LocationDTO>(HttpStatus.NOT_FOUND);
 		}
-		System.out.println("location DTO return: " + locationDTO.getCity());
+		System.out.println("location DTO CITY: " + locationDTO.getCity());
 		return new ResponseEntity<LocationDTO>(locationDTO, HttpStatus.OK);
 	}
-	
-	@RequestMapping(value = "/addlocation/add", method = RequestMethod.POST)
+
+	// add location info Cas
+	@RequestMapping(value = "/addlocation/addcas", method = RequestMethod.POST)
 	public ResponseEntity<LocationDTO> createLocation(@RequestParam String country, @RequestParam String city,
 			UriComponentsBuilder ucBuilder) {
 		LocationCas cas = new LocationCas(UUID.randomUUID(), country, city, DataTimeUtil.getCurrent(),
@@ -81,57 +100,72 @@ public class LocationController {
 		LocationCas a = locationRepository.saveLocationCas(cas);
 
 		HttpHeaders headers = new HttpHeaders();
-		headers.setLocation(ucBuilder.path("/location/getlocation/{country}").buildAndExpand(a.getCountry()).toUri());
+		headers.setLocation(
+				ucBuilder.path("/location/getlocationcas/{country}").buildAndExpand(a.getCountry()).toUri());
 		return new ResponseEntity<LocationDTO>(convertToDTO(a, DBType.CASSANDRA), headers, HttpStatus.CREATED);
 	}
 
-//	@PutMapping(value = "/update", headers = "Accept=application/json")
-//	public ResponseEntity<LocationDTO> updateLocation(@RequestBody LocationDTO location) {
-//		HttpHeaders headers = new HttpHeaders();
-//		headers.add("Location", "http://localhost:8080/location?id=" + location.getLocationId());
-//		return new ResponseEntity<LocationDTO>(
-//				convertToDTO(locationRepository.updateLocation(convertToJPAEntity(location)), DBType.JPA), headers,
-//				HttpStatus.OK);
-//	}
+	// add location info JPA
+	@RequestMapping(value = "/addlocation/addjpa", method = RequestMethod.POST)
+	public ResponseEntity<LocationDTO> addLocationInJPA(@RequestParam String country, @RequestParam String city,
+			UriComponentsBuilder ucBuilder) {
+		Location loc = new Location(UUID.randomUUID(), country, city,
+				new Timestamp(DataTimeUtil.getCurrent().getMillis()),
+				new Timestamp(DataTimeUtil.getCurrent().getMillis()));
 
-//	@GetMapping(value = "/jpa/querydsl")
-//	public ResponseEntity<List<LocationDTO>> getLocationByQueryDslFromJpa(
-//			@QuerydslPredicate(root = Location.class) Predicate predicate) {
-//		List<Location> list = service.getLocationByQueryDslFromJpa(predicate);
-//		List<LocationDTO> dtoList = list.stream().map(product -> convertToDTO(product, DBType.JPA))
-//				.collect(Collectors.toList());
-//		return new ResponseEntity<List<LocationDTO>>(dtoList, HttpStatus.OK);
-//	}
+		if (locationRepository.isExistsLocationinJPA(loc)) {
+			System.out.println("A location with name " + loc.getCountry() + " already exist");
+			return new ResponseEntity<LocationDTO>(HttpStatus.CONFLICT);
+		}
+		Location a = locationRepository.saveLocationJPA(loc);
 
-//	@GetMapping(value = "/jpa", params = "id")
-//	public ResponseEntity<LocationDTO> getLocationByIdFromJpa(@RequestParam("id") UUID id) {
-//		QLocation qp = QLocation.location;
-//		Predicate predicate = qp.locationId.eq(id);
-//		Location result = service.getOneLocationByQueryDslFromJpa(predicate);
-//		HttpHeaders headers = new HttpHeaders();
-//		headers.add("Location", "http://localhost:8080/location?id=" + result.getLocationId());
-//		return new ResponseEntity<LocationDTO>(convertToDTO(result, DBType.JPA), headers, HttpStatus.OK);
-//	}
-//
-//	@GetMapping(value = "/jpa", params = "country")
-//	public ResponseEntity<List<LocationDTO>> getLocationByCountryFromJpa(@RequestParam("country") String country) {
-//		QLocation qp = QLocation.location;
-//		Predicate predicate = qp.country.eq(country);
-//		List<Location> list = service.getLocationByQueryDslFromJpa(predicate);
-//		List<LocationDTO> dtoList = list.stream().map(product -> convertToDTO(product, DBType.JPA))
-//				.collect(Collectors.toList());
-//		return new ResponseEntity<List<LocationDTO>>(dtoList, HttpStatus.OK);
-//	}
-//
-//	@GetMapping(value = "/jpa", params = "city")
-//	public ResponseEntity<List<LocationDTO>> getLocationByCityFromJpa(@RequestParam("city") String city) {
-//		QLocation qp = QLocation.location;
-//		Predicate predicate = qp.city.eq(city);
-//		List<Location> list = service.getLocationByQueryDslFromJpa(predicate);
-//		List<LocationDTO> dtoList = list.stream().map(product -> convertToDTO(product, DBType.JPA))
-//				.collect(Collectors.toList());
-//		return new ResponseEntity<List<LocationDTO>>(dtoList, HttpStatus.OK);
-//	}
+		HttpHeaders headers = new HttpHeaders();
+		headers.setLocation(
+				ucBuilder.path("/location/getlocationjpa/{country}").buildAndExpand(a.getCountry()).toUri());
+		return new ResponseEntity<LocationDTO>(convertToDTO(a, DBType.JPA), headers, HttpStatus.CREATED);
+	}
+	
+	//add all location from CAS into JPA
+	@RequestMapping(value = "/addalllocation", method = RequestMethod.POST)
+	public ResponseEntity<Iterable<Location>> saveAllCasIntoJPA(){
+		for (LocationDTO dto : convertListLocationCas(locationRepository.getAllLocations())) {
+			locationRepository.saveLocationJPA(convertToJPAEntity(dto));
+		}
+		return new ResponseEntity<Iterable<Location>>(locationRepository.getAllLocationInJPA(), HttpStatus.CREATED);
+	}
+
+	// update JPA
+	@PutMapping(value = "/updateinjpa", headers = "Accept=application/json")
+	public ResponseEntity<LocationDTO> updateLocation( @RequestParam String country,
+			@RequestParam String city, UriComponentsBuilder ucBuilder) {
+		Location loc = locationRepository.findByCountryInJPA(country);
+		locationRepository.updateLocationInJPA(loc, country, city);
+
+		HttpHeaders headers = new HttpHeaders();
+		headers.setLocation(
+				ucBuilder.path("/location/getlocationjpa/{country}").buildAndExpand(loc.getCountry()).toUri());
+		return new ResponseEntity<LocationDTO>(convertToDTO(loc, DBType.JPA), headers, HttpStatus.OK);
+	}
+
+	// delete all location in Cas
+	@DeleteMapping(value = "deleteall", headers = "Accept=application/json")
+	public ResponseEntity<LocationDTO> deleteAllLocation() {
+		locationRepository.deleteAllLocationInCas();
+		return new ResponseEntity<LocationDTO>(HttpStatus.NO_CONTENT);
+	}
+
+	//
+	@RequestMapping(value = "/delete/{country}", method = RequestMethod.DELETE)
+	public ResponseEntity<List<LocationDTO>> deleteUser(@PathVariable("country") String country) {
+
+		List<LocationCas> dto = locationRepository.findByCountryInCas(country);
+		if (dto == null) {
+			return new ResponseEntity<List<LocationDTO>>(HttpStatus.NOT_FOUND);
+		}
+		
+		locationRepository.deleteLocationByCountry(country);
+		return new ResponseEntity<List<LocationDTO>>(HttpStatus.NO_CONTENT);
+	}
 
 	public LocationDTO convertToDTO(Object obj, DBType type) {
 		LocationDTO dto = null;
