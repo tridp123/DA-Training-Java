@@ -105,7 +105,7 @@ public class LocationServiceImpl extends BaseService implements LocationService 
 
 	@Override
 	public LocationCas updateLocationInCas(LocationCas location,String country, String city) {
-		if ((locationRepository.findOne(location.getLocationId()) == null)) {
+		if ((locationRepository.findById(location.getLocationId()) == null)) {
 			throw new NoDataFoundException("Location ID '" + location.getLocationId() + "' not found in DB");
 		}
 		location.setCountry(country);
@@ -116,7 +116,7 @@ public class LocationServiceImpl extends BaseService implements LocationService 
 
 	@Override
 	public Location updateLocationInJPA(Location location, String country, String city) {
-		if ((jpaRepository.findOne(location.getLocation_id()) == null)) {
+		if ((jpaRepository.findById(location.getLocation_id()) == null)) {
 			throw new NoDataFoundException("Location ID '" + location.getLocation_id() + "' not found in DB");
 		}
 		location.setCountry(country);

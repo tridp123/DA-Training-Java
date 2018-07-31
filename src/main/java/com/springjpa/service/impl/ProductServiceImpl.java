@@ -71,7 +71,7 @@ public class ProductServiceImpl extends BaseService implements ProductService {
 
 	@Override
 	public ProductCas updateProductInCas(ProductCas product, int item, String sClass, String inventory) {
-		if ((cassRepository.findOne(product.getProductId()) == null)) {
+		if ((cassRepository.findById(product.getProductId()) == null)) {
 			throw new NoDataFoundException("Product ID '" + product.getProductId() + "' not found in DB");
 		}
 		product.setItem(item);
@@ -83,7 +83,7 @@ public class ProductServiceImpl extends BaseService implements ProductService {
 
 	@Override
 	public Product updateProductInJPA(Product product, int item, String sClass, String inventory) {
-		if ((jpaRepository.findOne(product.getProductId()) == null)) {
+		if ((jpaRepository.findById(product.getProductId()) == null)) {
 			throw new NoDataFoundException("Product ID '" + product.getProductId() + "' not found in DB");
 		}
 		product.setItem(item);

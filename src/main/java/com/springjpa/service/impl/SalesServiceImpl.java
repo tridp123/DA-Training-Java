@@ -39,7 +39,7 @@ public class SalesServiceImpl extends BaseService implements SalesService {
 
 	@Override
 	public Sales updateSalesInJPA(Sales sales, int dollars) {
-		if (jpaRepository.findOne(sales.getId())==null) {
+		if (jpaRepository.findById(sales.getId())==null) {
 			throw new NoDataFoundException("Sales not found");
 		}
 		sales.setDollars(dollars);

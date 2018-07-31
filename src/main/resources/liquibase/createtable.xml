@@ -105,4 +105,87 @@
 			initiallyDeferred="true" referencedColumnNames="location_id"
 			referencedTableName="location" />
 	</changeSet>
+	<changeSet id="5214" author="tntri">
+		<createTable tableName="APP_USER">
+			<column name="USER_ID" type="bigint">
+				<constraints primaryKey="true" nullable="false"
+					unique="true" />
+			</column>
+			<column name="USER_NAME" type="VARCHAR(36)">
+				<constraints nullable="false" />
+			</column>
+			<column name="ENCRYTED_PASSWORD" type="varchar(128)">
+				<constraints nullable="false" />
+			</column>
+			<column name="ENABLED" type="int">
+				<constraints nullable="false" />
+			</column>
+		</createTable>
+		<createTable tableName="APP_ROLE">
+			<column name="ROLE_ID" type="bigint">
+				<constraints primaryKey="true" nullable="false" />
+			</column>
+			<column name="ROLE_NAME" type="VARCHAR(30)">
+				<constraints nullable="false" unique="true" />
+			</column>
+		</createTable>
+		<createTable tableName="USER_ROLE">
+			<column name="ID" type="bigint">
+				<constraints primaryKey="true" nullable="false" />
+			</column>
+			<column name="USER_ID" type="bigint">
+				<constraints nullable="false" unique="true" />
+			</column>
+			<column name="ROLE_ID" type="bigint">
+				<constraints nullable="false" unique="true" />
+			</column>
+		</createTable>
+
+		<createTable tableName="Persistent_Logins">
+			<column name="username" type="varchar(64)">
+				<constraints nullable="false" />
+			</column>
+			<column name="series" type="varchar(64)">
+				<constraints nullable="false" primaryKey="true" />
+			</column>
+			<column name="token" type="varchar(64)">
+				<constraints nullable="false" />
+			</column>
+			<column name="last_used" type="timestamp">
+				<constraints nullable="false" />
+			</column>
+		</createTable>
+		
+		
+
+		<addForeignKeyConstraint
+			baseColumnNames="product_id" baseTableName="sales"
+			constraintName="fk_sales_product" deferrable="true"
+			initiallyDeferred="true" referencedColumnNames="product_id"
+			referencedTableName="product" />
+		<addForeignKeyConstraint
+			baseColumnNames="time_id" baseTableName="sales"
+			constraintName="fk_sales_time" deferrable="true"
+			initiallyDeferred="true" referencedColumnNames="time_id"
+			referencedTableName="time" />
+		<addForeignKeyConstraint
+			baseColumnNames="location_id" baseTableName="sales"
+			constraintName="fk_sales_location" deferrable="true"
+			initiallyDeferred="true" referencedColumnNames="location_id"
+			referencedTableName="location" />
+
+		<addForeignKeyConstraint
+			baseColumnNames="USER_ID" baseTableName="USER_ROLE"
+			constraintName="USER_ROLE_FK1" deferrable="true"
+			initiallyDeferred="true" referencedColumnNames="USER_ID"
+			referencedTableName="APP_USER" />
+		<addForeignKeyConstraint
+			baseColumnNames="ROLE_ID" baseTableName="USER_ROLE"
+			constraintName="USER_ROLE_FK2" deferrable="true"
+			initiallyDeferred="true" referencedColumnNames="ROLE_ID"
+			referencedTableName="APP_ROLE" />
+	</changeSet>
+	
+	
+
 </databaseChangeLog>

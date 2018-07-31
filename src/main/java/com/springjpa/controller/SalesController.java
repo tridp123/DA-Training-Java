@@ -37,7 +37,7 @@ import com.springjpa.service.impl.SalesServiceImpl;
 import com.springjpa.util.DataTimeUtil;
 
 @RestController
-@RequestMapping("sales")
+@RequestMapping("/sales")
 public class SalesController {
 
 	public static final Logger log = LoggerFactory.getLogger(SalesController.class);
