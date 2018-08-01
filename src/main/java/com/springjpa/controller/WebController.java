@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.ModelAndView;
 
 import com.springjpa.model.cassandra.LocationCas;
+import com.springjpa.model.cassandra.ProductCas;
 import com.springjpa.security.util.WebUtils;
 import com.springjpa.service.LocationService;
 import com.springjpa.service.impl.LocationServiceImpl;
@@ -25,89 +26,67 @@ public class WebController {
 
 	public static final Logger log = LoggerFactory.getLogger(LocationController.class);
 
-	@Autowired
-	LocationService locationRepository = new LocationServiceImpl();
-
-	
-	@GetMapping(value = {"/","/welcome"})
+	@GetMapping(value = { "/", "/welcome" })
 	public ModelAndView welcomePage(Model model) {
 		ModelAndView modelAndView = new ModelAndView("welcomePage");
-        model.addAttribute("title", "Welcome");
-        model.addAttribute("message", "This is welcome page!");
-        modelAndView.addObject(model);
-        return modelAndView;
-    }
-	
-	
-	@GetMapping(value = {"/admin"})
-	  public ModelAndView adminPage(Model model, Principal principal) {
+		model.addAttribute("title", "Welcome");
+		model.addAttribute("message", "This is welcome page!");
+		modelAndView.addObject(model);
+		return modelAndView;
+	}
+
+	@GetMapping(value = { "/admin" })
+	public ModelAndView adminPage(Model model, Principal principal) {
 		ModelAndView modelAndView = new ModelAndView("adminPage");
-        User loginedUser = (User) ((Authentication) principal).getPrincipal();
- 
-        String userInfo = WebUtils.toString(loginedUser);
-        model.addAttribute("userInfo", userInfo);
-        modelAndView.addObject(model);
-        return modelAndView;
-    }
+		User loginedUser = (User) ((Authentication) principal).getPrincipal();
 
-	@GetMapping(value = {"/login"})
-	 public ModelAndView loginPage(Model model) {
+		String userInfo = WebUtils.toString(loginedUser);
+		model.addAttribute("userInfo", userInfo);
+		modelAndView.addObject(model);
+		return modelAndView;
+	}
+
+	@GetMapping(value = { "/login" })
+	public ModelAndView loginPage(Model model) {
 		ModelAndView modelAndView = new ModelAndView("loginPage");
-        return modelAndView;
-    }
+		return modelAndView;
+	}
 
-	@GetMapping(value = {"/logoutsuccessful"})
+	@GetMapping(value = { "/logoutsuccessful" })
 	public ModelAndView logoutSuccessfulPage(Model model) {
 		ModelAndView modelAndView = new ModelAndView("logoutSuccessfulPage");
-        model.addAttribute("title", "Logout");
-        modelAndView.addObject(model);
-        return modelAndView;
-    }
-	
-	@GetMapping(value = {"/userInfo"})
-	 public ModelAndView userInfo(Model model, Principal principal) {
-		ModelAndView modelAndView = new ModelAndView("userInfoPage");
-        // Sau khi user login thanh cong se co principal
-        String userName = principal.getName();
-        System.out.println("User Name: " + userName);
-        User loginedUser = (User) ((Authentication) principal).getPrincipal();
-        String userInfo = WebUtils.toString(loginedUser);
-        model.addAttribute("userInfo", userInfo);
-        modelAndView.addObject(model);
-        return modelAndView;
-    }
-	
-	@GetMapping(value = {"/403"})
-	 public ModelAndView accessDenied(Model model, Principal principal) {
-		ModelAndView modelAndView = new ModelAndView("403Page");
-        if (principal != null) {
-            User loginedUser = (User) ((Authentication) principal).getPrincipal();
-            String userInfo = WebUtils.toString(loginedUser);
- 
-            model.addAttribute("userInfo", userInfo);
- 
-            String message = "Hi " + principal.getName() //
-                    + "<br> You do not have permission to access this page!";
-            model.addAttribute("message", message);
-            modelAndView.addObject(model);
-        }
-        return modelAndView;
-    }
-	
-	@RequestMapping("/save")
-	public String process() {
-		// save a Location info Cassandra
-		// sample data
-		LocationCas l1 = new LocationCas(UUID.randomUUID(), "USA", "New York", DataTimeUtil.getCurrent(), DataTimeUtil.getCurrent());
-		LocationCas l2 = new LocationCas(UUID.randomUUID(), "Japan", "Tokyo", DataTimeUtil.getCurrent(), DataTimeUtil.getCurrent());
-		LocationCas l3 = new LocationCas(UUID.randomUUID(), "Laos", "Vieng Chan", DataTimeUtil.getCurrent(), DataTimeUtil.getCurrent());
-
-		locationRepository.saveLocationCas(l1);
-		locationRepository.saveLocationCas(l2);
-		locationRepository.saveLocationCas(l3);
-
-		return "Done";
+		model.addAttribute("title", "Logout");
+		modelAndView.addObject(model);
+		return modelAndView;
 	}
-	
-	
+
+	@GetMapping(value = { "/userInfo" })
+	public ModelAndView userInfo(Model model, Principal principal) {
+		ModelAndView modelAndView = new ModelAndView("userInfoPage");
+		// Sau khi user login thanh cong se co principal
+		String userName = principal.getName();
+		System.out.println("User Name: " + userName);
+		User loginedUser = (User) ((Authentication) principal).getPrincipal();
+		String userInfo = WebUtils.toString(loginedUser);
+		model.addAttribute("userInfo", userInfo);
+		modelAndView.addObject(model);
+		return modelAndView;
+	}
+
+	@GetMapping(value = { "/403" })
+	public ModelAndView accessDenied(Model model, Principal principal) {
+		ModelAndView modelAndView = new ModelAndView("403Page");
+		if (principal != null) {
+			User loginedUser = (User) ((Authentication) principal).getPrincipal();
+			String userInfo = WebUtils.toString(loginedUser);
+
+			model.addAttribute("userInfo", userInfo);
+
+			String message = "Hi " + principal.getName() //
+					+ "<br> You do not have permission to access this page!";
+			model.addAttribute("message", message);
+			modelAndView.addObject(model);
+		}
+		return modelAndView;
+	}
 }

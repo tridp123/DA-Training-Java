@@ -61,11 +61,17 @@ public class ProductServiceImpl extends BaseService implements ProductService {
 
 	@Override
 	public ProductCas saveProductCas(ProductCas productCas) {
+		if (isExistsProductinCas(productCas)) {
+			return new ProductCas();
+		}
 		return cassRepository.save(productCas);
 	}
 
 	@Override
 	public Product saveProductJPA(Product product) {
+		if (isExistsProductinJPA(product)) {
+			return new Product();
+		}
 		return jpaRepository.save(product);
 	}
 

@@ -77,7 +77,7 @@ public class ProductCas implements Serializable {
 		this.inventory = inventory;
 	}
 
-	@Column("create_at")
+	@Column("created_at")
 	public DateTime getCreatedAt() {
 		return createdAt;
 	}

@@ -17,13 +17,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.springjpa.dto.LocationDTO;
 import com.springjpa.dto.ProductDTO;
 import com.springjpa.exception.BadRequestException;
 import com.springjpa.exception.NoDataFoundException;
@@ -58,23 +59,20 @@ public class ProductController {
 	}
 
 	// -------------------Retrieve Single Product by Class--------------------------------------------------------
-	@RequestMapping(value = "/getproductcas/{sClass}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+	@GetMapping(value = "/getproductcas/{sClass}", produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<List<ProductDTO>> getProductCas(@PathVariable("sClass") String sClass) {
-		
 		List<ProductCas> ProductCas = productService.findByClassInCas(sClass);
-		
 		List<ProductDTO> list = new ArrayList<>();
-		
 		for (ProductCas cas : ProductCas) {
 			list.add(convertToDTO(cas, DBType.CASSANDRA));
 		}
-		if (list == null) {
+		if (list.size()==0) {
 			return new ResponseEntity<List<ProductDTO>>(HttpStatus.NOT_FOUND);
 		}
 		return new ResponseEntity<List<ProductDTO>>(list, HttpStatus.OK);
 	}
 
-	@RequestMapping(value = "/getproductjpa/{sClass}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+	@GetMapping(value = "/getproductjpa/{sClass}", produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<ProductDTO> getProductJPA(@PathVariable("sClass") String sClass) {
 		System.out.println("Fetching Product with sClass " + sClass);
 		ProductDTO ProductDTO = convertToDTO(productService.findByClassInJPA(sClass), DBType.JPA);
@@ -87,7 +85,7 @@ public class ProductController {
 	}
 	
 	// add product info Cas
-		@RequestMapping(value = "/addproduct/addcas", method = RequestMethod.POST)
+		@PostMapping(value = "/addproduct/addcas")
 		public ResponseEntity<ProductDTO> createProduct(@RequestParam int item, @RequestParam String sClass,@RequestParam String inventory,
 				UriComponentsBuilder ucBuilder) {
 			ProductCas pro = new ProductCas(UUID.randomUUID(), item,sClass, inventory, DataTimeUtil.getCurrent(),
@@ -106,7 +104,7 @@ public class ProductController {
 		}
 
 		// add product info JPA
-		@RequestMapping(value = "/addproduct/addjpa", method = RequestMethod.POST)
+		@PostMapping(value = "/addproduct/addjpa")
 		public ResponseEntity<ProductDTO> addProductInJPA(@RequestParam int item, @RequestParam String sClass,@RequestParam String inventory,
 				UriComponentsBuilder ucBuilder) {
 			Product pro = new Product(UUID.randomUUID(), item,sClass, inventory,new Timestamp(DataTimeUtil.getCurrent().getMillis()) ,
@@ -120,12 +118,12 @@ public class ProductController {
 
 			HttpHeaders headers = new HttpHeaders();
 			headers.setLocation(
-					ucBuilder.path("/product/getproductCas/{sClass}").buildAndExpand(a.getClass()).toUri());
-			return new ResponseEntity<ProductDTO>(convertToDTO(a, DBType.CASSANDRA), headers, HttpStatus.CREATED);
+					ucBuilder.path("/product/getproductjpa/{sClass}").buildAndExpand(a.getClass()).toUri());
+			return new ResponseEntity<ProductDTO>(convertToDTO(a, DBType.JPA), headers, HttpStatus.CREATED);
 		}
 		
 		//add all product from CAS into JPA
-		@RequestMapping(value = "/addallproduct", method = RequestMethod.POST)
+		@PostMapping(value = "/addallproduct")
 		public ResponseEntity<Iterable<Product>> saveAllCasIntoJPA(){
 			for (ProductDTO pro : convertListProductCas(productService.getAllProduct())) {
 				productService.saveProductJPA(convertToJPAEntity(pro));
@@ -135,9 +133,12 @@ public class ProductController {
 		
 		// update JPA
 		@PutMapping(value = "/updateinjpa", headers = "Accept=application/json")
-		public ResponseEntity<ProductDTO> updateLocation( @RequestParam int item,
+		public ResponseEntity<ProductDTO> updateProduct( @RequestParam int item,
 				@RequestParam String sClass,@RequestParam String inventory, UriComponentsBuilder ucBuilder) {
 			Product pro = productService.findByClassInJPA(sClass);
+			if (!productService.isExistsProductinJPA(pro)) {
+				return new ResponseEntity<ProductDTO>(HttpStatus.NOT_FOUND);
+			}
 			productService.updateProductInJPA(pro, item, sClass, inventory);
 
 			HttpHeaders headers = new HttpHeaders();
@@ -145,15 +146,15 @@ public class ProductController {
 					ucBuilder.path("/product/getproductjpa/{sClass}").buildAndExpand(pro.getsClass()).toUri());
 			return new ResponseEntity<ProductDTO>(convertToDTO(pro, DBType.JPA), headers, HttpStatus.OK);
 		}
+		
 		// delete all product in Cas
 		@DeleteMapping(value = "deleteall", headers = "Accept=application/json")
-		public ResponseEntity<ProductDTO> deleteAllLocation() {
+		public ResponseEntity<ProductDTO> deleteAllProduct() {
 			productService.deleteAllProductInCas();
 			return new ResponseEntity<ProductDTO>(HttpStatus.NO_CONTENT);
 		}
 
-		//
-		@RequestMapping(value = "/delete/{sClass}", method = RequestMethod.DELETE)
+		@DeleteMapping(value = "/delete/{sClass}")
 		public ResponseEntity<List<ProductDTO>> deleteProduct(@PathVariable("sClass") String sClass) {
 
 			List<ProductCas> dto = productService.findByClassInCas(sClass);
@@ -226,5 +227,18 @@ public class ProductController {
 		ProductCas Product = new ProductCas(dto.getProductId(), dto.getItem(), dto.getsClass(),dto.getInventory(), dto.getCreatedAt(),
 				dto.getModifiedAt());
 		return Product;
+	}
+	@RequestMapping("/initialproduct")
+	public String process() {
+		// sample data
+		ProductCas p1 = new ProductCas(UUID.randomUUID(), 5, "sClass1", "Inventory1", DataTimeUtil.getCurrent(), DataTimeUtil.getCurrent());
+		ProductCas p2 = new ProductCas(UUID.randomUUID(), 10, "sClass2", "Inventory2", DataTimeUtil.getCurrent(), DataTimeUtil.getCurrent());
+		ProductCas p3 = new ProductCas(UUID.randomUUID(), 15, "sClass3", "Inventory3", DataTimeUtil.getCurrent(), DataTimeUtil.getCurrent());
+		
+		productService.saveProductCas(p1);
+		productService.saveProductCas(p2);
+		productService.saveProductCas(p3);
+
+		return "Done";
 	}
 }

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<databaseChangeLog
+	xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+	xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd
+    http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+
+	<property dbms="postgresql" name="insert_table_security" />
+	<changeSet id="3" author="tntri" context="data-examples">
+
+		<insert tableName="APP_USER" catalogName="datraining"
+			dbms="postgresql" schemaName="public">
+			<column name="USER_ID" value="2" />
+			<column name="USER_NAME" value="dbuser1" />
+			<column name="ENCRYTED_PASSWORD"
+				value="$2a$10$PrI5Gk9L.tSZiW9FXhTS8O8Mz9E97k2FZbFvGFFaSsiTUIl.TCrFu" />
+			<column name="ENABLED" value="1" />
+		</insert>
+
+		<insert tableName="APP_USER" catalogName="datraining"
+			dbms="postgresql" schemaName="public">
+			<column name="USER_ID" value="1" />
+			<column name="USER_NAME" value="dbadmin1" />
+			<column name="ENCRYTED_PASSWORD"
+				value="$2a$10$PrI5Gk9L.tSZiW9FXhTS8O8Mz9E97k2FZbFvGFFaSsiTUIl.TCrFu" />
+			<column name="ENABLED" value="1" />
+		</insert>
+
+		<insert tableName="APP_ROLE" catalogName="datraining"
+			dbms="postgresql" schemaName="public">
+			<column name="ROLE_ID" value="1" />
+			<column name="ROLE_NAME" value="ROLE_ADMIN" />
+		</insert>
+
+		<insert tableName="APP_ROLE" catalogName="datraining"
+			dbms="postgresql" schemaName="public">
+			<column name="ROLE_ID" value="2" />
+			<column name="ROLE_NAME" value="ROLE_USER" />
+		</insert>
+
+		<insert tableName="USER_ROLE" catalogName="datraining"
+			dbms="postgresql" schemaName="public">
+			<column name="ID" value="1" />
+			<column name="USER_ID" value="1" />
+			<column name="ROLE_ID" value="1" />
+		</insert>
+
+		<insert tableName="USER_ROLE" catalogName="datraining"
+			dbms="postgresql" schemaName="public">
+			<column name="ID" value="2" />
+			<column name="USER_ID" value="2" />
+			<column name="ROLE_ID" value="2" />
+		</insert>
+
+
+
+	</changeSet>
+
+</databaseChangeLog>

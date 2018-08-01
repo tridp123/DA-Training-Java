@@ -1,14 +1,10 @@
 package com.springjpa.dto;
 
-
 import java.util.UUID;
 
 import javax.validation.constraints.NotNull;
-
 import org.joda.time.DateTime;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class ProductDTO {
 
 	private UUID productId;

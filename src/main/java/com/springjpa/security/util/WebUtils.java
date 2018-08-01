@@ -16,6 +16,7 @@ public class WebUtils {
        Collection<GrantedAuthority> authorities = user.getAuthorities();
        if (authorities != null && !authorities.isEmpty()) {
            sb.append(" (");
+           //list role of user
            boolean first = true;
            for (GrantedAuthority a : authorities) {
                if (first) {
@@ -25,9 +26,9 @@ public class WebUtils {
                    sb.append(", ").append(a.getAuthority());
                }
            }
+           
            sb.append(")");
        }
        return sb.toString();
    }
-    
 }

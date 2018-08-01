@@ -11,7 +11,7 @@
 		dbms="postgresql" />
 
 	<!-- v2: Initialize tables -->
-	<changeSet id="1421" author="tntri">
+	<changeSet id="1" author="tntri">
 		<createTable tableName="product">
 			<column name="product_id" type="uuid">
 				<constraints primaryKey="true" nullable="false" />
@@ -105,7 +105,9 @@
 			initiallyDeferred="true" referencedColumnNames="location_id"
 			referencedTableName="location" />
 	</changeSet>
-	<changeSet id="5214" author="tntri">
+	
+	<!--Spring security-->
+	<changeSet id="2" author="tntri">
 		<createTable tableName="APP_USER">
 			<column name="USER_ID" type="bigint">
 				<constraints primaryKey="true" nullable="false"
@@ -141,7 +143,7 @@
 			</column>
 		</createTable>
 
-		<createTable tableName="Persistent_Logins">
+		<createTable tableName="persistent_logins">
 			<column name="username" type="varchar(64)">
 				<constraints nullable="false" />
 			</column>
@@ -151,29 +153,10 @@
 			<column name="token" type="varchar(64)">
 				<constraints nullable="false" />
 			</column>
-			<column name="last_used" type="timestamp">
+			<column name="last_used" type="timestamp with time zone">
 				<constraints nullable="false" />
 			</column>
 		</createTable>
-		
-		
-
-		<addForeignKeyConstraint
-			baseColumnNames="product_id" baseTableName="sales"
-			constraintName="fk_sales_product" deferrable="true"
-			initiallyDeferred="true" referencedColumnNames="product_id"
-			referencedTableName="product" />
-		<addForeignKeyConstraint
-			baseColumnNames="time_id" baseTableName="sales"
-			constraintName="fk_sales_time" deferrable="true"
-			initiallyDeferred="true" referencedColumnNames="time_id"
-			referencedTableName="time" />
-		<addForeignKeyConstraint
-			baseColumnNames="location_id" baseTableName="sales"
-			constraintName="fk_sales_location" deferrable="true"
-			initiallyDeferred="true" referencedColumnNames="location_id"
-			referencedTableName="location" />
-
 		<addForeignKeyConstraint
 			baseColumnNames="USER_ID" baseTableName="USER_ROLE"
 			constraintName="USER_ROLE_FK1" deferrable="true"
