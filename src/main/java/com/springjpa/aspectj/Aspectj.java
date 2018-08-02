@@ -14,19 +14,17 @@ import com.springjpa.util.LogUtil;
 @Configuration
 public class Aspectj {
 
-	@Before("execution(* com.springjpa.*.*(..))")
+	@Before("execution(* com.springjpa.controller.*.*(..)) || execution(* com.springjpa.service.*.*(..))")
 
-	/*	@Before("execution(* com.springjpa.controller.*.*(..)) || execution(* com.springjpa.service.*.*(..))")
-*/
 	public void logBefore(JoinPoint joinPoint) {
 		Logger logger = LoggerFactory.getLogger(joinPoint.getTarget().getClass());
-		LogUtil.info(logger,"Before method: " + joinPoint.getSignature().getName());
+		LogUtil.info(logger, "Before method: " + joinPoint.getSignature().getName());
 	}
 
 	@After("execution(* com.springjpa.*.*(..))")
 	public void logAfter(JoinPoint joinPoint) {
 		Logger logger = LoggerFactory.getLogger(joinPoint.getTarget().getClass());
-		LogUtil.info(logger,"After method: " + joinPoint.getSignature().getName());
+		LogUtil.info(logger, "After method: " + joinPoint.getSignature().getName());
 	}
 
 }

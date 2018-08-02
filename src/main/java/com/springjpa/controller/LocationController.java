@@ -20,18 +20,15 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.springjpa.dto.LocationDTO;
-import com.springjpa.dto.ProductDTO;
 import com.springjpa.exception.BadRequestException;
 import com.springjpa.exception.NoDataFoundException;
 import com.springjpa.model.DBType;
 import com.springjpa.model.cassandra.LocationCas;
-import com.springjpa.model.cassandra.ProductCas;
 import com.springjpa.model.jpa.Location;
 import com.springjpa.service.LocationService;
 import com.springjpa.service.impl.LocationServiceImpl;
@@ -62,30 +59,25 @@ public class LocationController {
 
 	// -------------------Retrieve Single location by
 	// Country--------------------------------------------------------
-	@GetMapping(value = "/getlocationcas/{country}", produces = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<List<LocationDTO>> getLocationCas(@PathVariable("country") String country) {
-		System.out.println("Fetching location with country " + country);
-		List<LocationCas> locationCas = locationRepository.findByCountryInCas(country);
-		List<LocationDTO> list = new ArrayList<>();
-		for (LocationCas cas : locationCas) {
-			list.add(convertToDTO(cas, DBType.CASSANDRA));
+	@GetMapping(value = "/getlocationcas/{locationId}", produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<LocationDTO> getLocationCas(@PathVariable("locationId") String id) {
+		System.out.println("Fetching location with id " + id);
+		LocationCas locationCas = locationRepository.findByIdInCas(UUID.fromString(id));
+		if (locationCas==null) {
+			return new ResponseEntity<LocationDTO>(HttpStatus.NOT_FOUND);
 		}
-		if (list.size()==0) {
-			return new ResponseEntity<List<LocationDTO>>(HttpStatus.NOT_FOUND);
-		}
-		return new ResponseEntity<List<LocationDTO>>(list, HttpStatus.OK);
+		return new ResponseEntity<LocationDTO>(convertToDTO(locationCas, DBType.CASSANDRA), HttpStatus.OK);
 	}
 
-	@GetMapping(value = "/getlocationjpa/{country}", produces = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<LocationDTO> getLocationJPA(@PathVariable("country") String country) {
-		System.out.println("Fetching location with country " + country);
-		LocationDTO locationDTO = convertToDTO(locationRepository.findByCountryInJPA(country), DBType.JPA);
-
+	@GetMapping(value = "/getlocationjpa/{locationId}", produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<LocationDTO> getLocationJPA(@PathVariable("locationId") String id) {
+		System.out.println("Fetching location with locationId " + id);
+		LocationDTO locationDTO = convertToDTO(locationRepository.findByIdInJPA(UUID.fromString(id)), DBType.JPA);
 		if (locationDTO == null) {
 			System.out.println("Location with id " + locationDTO.getLocationId() + " not found");
 			return new ResponseEntity<LocationDTO>(HttpStatus.NOT_FOUND);
 		}
-		System.out.println("location DTO CITY: " + locationDTO.getCity());
+		System.out.println("location DTO id: " + locationDTO.getLocationId());
 		return new ResponseEntity<LocationDTO>(locationDTO, HttpStatus.OK);
 	}
 
@@ -104,7 +96,7 @@ public class LocationController {
 
 		HttpHeaders headers = new HttpHeaders();
 		headers.setLocation(
-				ucBuilder.path("/location/getlocationcas/{country}").buildAndExpand(a.getCountry()).toUri());
+				ucBuilder.path("/location/getlocationcas/{locationId}").buildAndExpand(a.getLocationId()).toUri());
 		return new ResponseEntity<LocationDTO>(convertToDTO(a, DBType.CASSANDRA), headers, HttpStatus.CREATED);
 	}
 
@@ -124,24 +116,24 @@ public class LocationController {
 
 		HttpHeaders headers = new HttpHeaders();
 		headers.setLocation(
-				ucBuilder.path("/location/getlocationjpa/{country}").buildAndExpand(a.getCountry()).toUri());
+				ucBuilder.path("/location/getlocationjpa/{locationId}").buildAndExpand(a.getLocation_id()).toUri());
 		return new ResponseEntity<LocationDTO>(convertToDTO(a, DBType.JPA), headers, HttpStatus.CREATED);
 	}
 	
 	//add all location from CAS into JPA
 	@PostMapping(value = "/addalllocation")
-	public ResponseEntity<Iterable<Location>> saveAllCasIntoJPA(){
+	public ResponseEntity<List<Location>> saveAllCasIntoJPA(){
 		for (LocationDTO dto : convertListLocationCas(locationRepository.getAllLocations())) {
 			locationRepository.saveLocationJPA(convertToJPAEntity(dto));
 		}
-		return new ResponseEntity<Iterable<Location>>(locationRepository.getAllLocationInJPA(), HttpStatus.CREATED);
+		return new ResponseEntity<List<Location>>(locationRepository.getAllLocationInJPA(), HttpStatus.CREATED);
 	}
 
 	// update JPA
 	@PutMapping(value = "/updateinjpa", headers = "Accept=application/json")
-	public ResponseEntity<LocationDTO> updateLocation( @RequestParam String country,
+	public ResponseEntity<LocationDTO> updateLocation( @RequestParam String id, @RequestParam String country,
 			@RequestParam String city, UriComponentsBuilder ucBuilder) {
-		Location loc = locationRepository.findByCountryInJPA(country);
+		Location loc = locationRepository.findByIdInJPA(UUID.fromString(id));
 		if (!locationRepository.isExistsLocationinJPA(loc)) {
 			return new ResponseEntity<LocationDTO>(HttpStatus.NOT_FOUND);
 		}
@@ -149,7 +141,7 @@ public class LocationController {
 
 		HttpHeaders headers = new HttpHeaders();
 		headers.setLocation(
-				ucBuilder.path("/location/getlocationjpa/{country}").buildAndExpand(loc.getCountry()).toUri());
+				ucBuilder.path("/location/getlocationjpa/{locationId}").buildAndExpand(loc.getLocation_id()).toUri());
 		return new ResponseEntity<LocationDTO>(convertToDTO(loc, DBType.JPA), headers, HttpStatus.OK);
 	}
 
@@ -159,18 +151,11 @@ public class LocationController {
 		locationRepository.deleteAllLocationInCas();
 		return new ResponseEntity<LocationDTO>(HttpStatus.NO_CONTENT);
 	}
-
 	//
-	@DeleteMapping(value = "/delete/{country}")
-	public ResponseEntity<List<LocationDTO>> deleteUser(@PathVariable("country") String country) {
-
-		List<LocationCas> dto = locationRepository.findByCountryInCas(country);
-		if (dto == null) {
-			return new ResponseEntity<List<LocationDTO>>(HttpStatus.NOT_FOUND);
-		}
-		
-		locationRepository.deleteLocationByCountry(country);
-		return new ResponseEntity<List<LocationDTO>>(HttpStatus.NO_CONTENT);
+	@DeleteMapping(value = "/delete/{locationId}")
+	public ResponseEntity<LocationDTO>  deleteUser(@PathVariable("locationId") String id) {
+		locationRepository.deleteLocationById(UUID.fromString(id));
+		return new ResponseEntity<LocationDTO>(HttpStatus.NO_CONTENT);
 	}
 
 	public LocationDTO convertToDTO(Object obj, DBType type) {
@@ -192,7 +177,7 @@ public class LocationController {
 		return dto;
 	}
 
-	public List<LocationDTO> convertListLocationCas(Iterable<LocationCas> list) {
+	public List<LocationDTO> convertListLocationCas(List<LocationCas> list) {
 		List<LocationDTO> listDTO = new ArrayList<>();
 		if (list == null) {
 			throw new NoDataFoundException("Not found location");
@@ -205,7 +190,7 @@ public class LocationController {
 		return listDTO;
 	}
 
-	public List<LocationDTO> convertListLocationJPA(Iterable<Location> list) {
+	public List<LocationDTO> convertListLocationJPA(List<Location> list) {
 		List<LocationDTO> listDTO = new ArrayList<>();
 		if (list == null) {
 			throw new NoDataFoundException("Not found location");

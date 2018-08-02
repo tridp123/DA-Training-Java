@@ -1,22 +1,21 @@
 package com.springjpa.service;
 
 import java.util.List;
+import java.util.UUID;
 
-import com.springjpa.model.cassandra.LocationCas;
 import com.springjpa.model.cassandra.TimeCas;
-import com.springjpa.model.jpa.Location;
 import com.springjpa.model.jpa.Time;
 
 public interface TimeService {
 
 	// get
-	public Iterable<TimeCas> getAllTimes();
+	public List<TimeCas> getAllTimes();
 
-	public Iterable<Time> getAllTimeInJPA();
+	public List<Time> getAllTimeInJPA();
 
-	public List<TimeCas> findByYearInCas(int year);
+	public TimeCas findByIdInCas(UUID id);
 
-	public Time findByYearInJPA(int year);
+	public Time findByIdInJPA(UUID id);
 
 	// add
 	public TimeCas saveTimeCas(TimeCas timeCas);
@@ -31,7 +30,7 @@ public interface TimeService {
 	// dalete
 	public void deleteAllTimeInCas();
 
-	public void deleteTimeByYear(int year);
+	public void deleteTimeById(UUID id);
 
 	// check location
 	public boolean isExistsTime(TimeCas timeCas);

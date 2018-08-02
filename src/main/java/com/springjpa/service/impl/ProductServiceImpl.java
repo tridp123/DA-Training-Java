@@ -3,12 +3,14 @@ package com.springjpa.service.impl;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.springjpa.exception.NoDataFoundException;
 import com.springjpa.model.cassandra.ProductCas;
+import com.springjpa.model.jpa.Location;
 import com.springjpa.model.jpa.Product;
 import com.springjpa.repository.ProductCasRepository;
 import com.springjpa.repository.ProductRepository;
@@ -29,30 +31,34 @@ public class ProductServiceImpl extends BaseService implements ProductService {
 	}
 
 	@Override
-	public Iterable<ProductCas> getAllProduct() {
-		return cassRepository.findAll();
+	public List<ProductCas> getAllProduct() {
+		List<ProductCas> a = new ArrayList<>();
+		cassRepository.findAll().forEach(a::add);
+		return a;
 	}
 
 	@Override
-	public Iterable<Product> getAllProductInJPA() {
-		return jpaRepository.findAll();
+	public List<Product> getAllProductInJPA() {
+		List<Product> a = new ArrayList<>();
+		jpaRepository.findAll().forEach(a::add);
+		return a;
 	}
 
 	@Override
-	public List<ProductCas> findByClassInCas(String sClass) {
-		List<ProductCas> result = new ArrayList<>();
+	public ProductCas findByIdInCas(UUID id) {
+		ProductCas result = null;
 		for (ProductCas lo : getAllProduct()) {
-			if (lo.getsClass().equals(sClass)) {
-				result.add(lo);
+			if (lo.getProductId().equals(id)) {
+				result=lo;
 			}
 		}
 		return result;
 	}
 
 	@Override
-	public Product findByClassInJPA(String sClass) {
+	public Product findByIdInJPA(UUID id) {
 		for (Product lo : getAllProductInJPA()) {
-			if (lo.getsClass().equals(sClass)) {
+			if (lo.getsClass().equals(id)) {
 				return lo;
 			}
 		}
@@ -105,9 +111,9 @@ public class ProductServiceImpl extends BaseService implements ProductService {
 	}
 
 	@Override
-	public void deleteProductByClass(String sClass) {
+	public void deleteProductById(UUID id) {
 		for (ProductCas pro : getAllProduct()) {
-			if (pro.getsClass().equals(sClass)) {
+			if (pro.getProductId().equals(id)) {
 				cassRepository.delete(pro);
 			}
 		}

@@ -22,7 +22,10 @@ import com.springjpa.dto.SalesDTO;
 import com.springjpa.exception.BadRequestException;
 import com.springjpa.exception.NoDataFoundException;
 import com.springjpa.model.DBType;
+import com.springjpa.model.cassandra.LocationCas;
+import com.springjpa.model.cassandra.ProductCas;
 import com.springjpa.model.cassandra.SalesCas;
+import com.springjpa.model.cassandra.TimeCas;
 import com.springjpa.model.jpa.Sales;
 import com.springjpa.model.jpa.SalesId;
 import com.springjpa.service.SalesService;
@@ -39,24 +42,23 @@ public class SalesController {
 	private SalesService salesService = new SalesServiceImpl();
 
 	/* get */
-	// -------------------Retrieve All Sales--------------------------------------------------------
+	// -------------------Retrieve All
+	// Sales--------------------------------------------------------
 	@GetMapping(value = "/getallsalescas", headers = "Accept=application/json")
 	public ResponseEntity<List<SalesDTO>> getAllSalesCas() {
 		List<SalesDTO> list = convertListSalesCas(salesService.getAllSalse());
 		return new ResponseEntity<List<SalesDTO>>(list, HttpStatus.OK);
 	}
-	
-	// add Sales info JPA
-		@RequestMapping(value = "/addsales/addjpa", method = RequestMethod.POST)
-		public ResponseEntity<SalesDTO> addSalesInJPA(@RequestBody SalesDTO sales) {
 
-			SalesDTO result = convertToDTO(salesService.saveSalesJPA(convertToJPAEntity(sales)), DBType.JPA);
-			HttpHeaders headers = new HttpHeaders();
-			headers.add("Location", "http://localhost:8080/sales?product-id=" + sales.getProductId());
-			return new ResponseEntity<SalesDTO>(result, headers, HttpStatus.CREATED);
-		}
-	
-	
+	// add Sales info JPA
+	@RequestMapping(value = "/addsales/addjpa", method = RequestMethod.POST)
+	public ResponseEntity<SalesDTO> addSalesInJPA(@RequestBody SalesDTO sales) {
+
+		SalesDTO result = convertToDTO(salesService.saveSalesJPA(convertToJPAEntity(sales)), DBType.JPA);
+		HttpHeaders headers = new HttpHeaders();
+		headers.add("Location", "http://localhost:8080/sales?product-id=" + sales.getProductId());
+		return new ResponseEntity<SalesDTO>(result, headers, HttpStatus.CREATED);
+	}
 
 	public SalesDTO convertToDTO(Object obj, DBType type) {
 		SalesDTO dto = null;
@@ -77,7 +79,7 @@ public class SalesController {
 		return dto;
 	}
 
-	public List<SalesDTO> convertListSalesCas(Iterable<SalesCas> list) {
+	public List<SalesDTO> convertListSalesCas(List<SalesCas> list) {
 		List<SalesDTO> listDTO = new ArrayList<>();
 		if (list == null) {
 			throw new NoDataFoundException("Not found Sales");
@@ -90,7 +92,7 @@ public class SalesController {
 		return listDTO;
 	}
 
-	public List<SalesDTO> convertListProductJPA(Iterable<Sales> list) {
+	public List<SalesDTO> convertListProductJPA(List<Sales> list) {
 		List<SalesDTO> listDTO = new ArrayList<>();
 		if (list == null) {
 			throw new NoDataFoundException("Not found Sales");
@@ -127,6 +129,25 @@ public class SalesController {
 		sales.setCreatedAt(dto.getCreatedAt());
 		sales.setModifiedAt(dto.getModifiedAt());
 		return sales;
+	}
+	
+	@RequestMapping("/initialsales")
+	public String process() {
+		// sample data
+		TimeCas t1 = new TimeCas(UUID.randomUUID(), 7, 3, 2018, DataTimeUtil.getCurrent(), DataTimeUtil.getCurrent());
+		ProductCas p1 = new ProductCas(UUID.randomUUID(), 241, "sClass241", "Inventory241", DataTimeUtil.getCurrent(), DataTimeUtil.getCurrent());
+		LocationCas l1 = new LocationCas(UUID.randomUUID(), "China", "HongKong", DataTimeUtil.getCurrent(), DataTimeUtil.getCurrent());
+
+		SalesCas s2 = new SalesCas();
+		s2.setTimeId(t1.getTimeId());
+		s2.setProductId(p1.getProductId());
+		s2.setLocationId(l1.getLocationId());
+		s2.setCreatedAt(DataTimeUtil.getCurrent());
+		s2.setModifiedAt(DataTimeUtil.getCurrent());
+		
+		
+	salesService.saveSalesCas(s2);
+		return "Done";
 	}
 
 }

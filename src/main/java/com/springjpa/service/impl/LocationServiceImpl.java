@@ -3,6 +3,7 @@ package com.springjpa.service.impl;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -28,8 +29,10 @@ public class LocationServiceImpl extends BaseService implements LocationService 
 	}
 
 	@Override
-	public Iterable<LocationCas> getAllLocations() {
-		return locationRepository.findAll();
+	public List<LocationCas> getAllLocations() {
+		List<LocationCas> a = new ArrayList<>();
+		locationRepository.findAll().forEach(a::add);
+		return a;
 	}
 
 	@Override
@@ -55,20 +58,20 @@ public class LocationServiceImpl extends BaseService implements LocationService 
 	}
 
 	@Override
-	public List<LocationCas> findByCountryInCas(String country) {
-		List<LocationCas> result = new ArrayList<>();
+	public LocationCas findByIdInCas(UUID id) {
+		LocationCas result = null;
 		for (LocationCas lo : getAllLocations()) {
-			if (lo.getCountry().equals(country)) {
-				result.add(lo);
+			if (lo.getLocationId().equals(id)) {
+				result = lo;
 			}
 		}
 		return result;
 	}
 
 	@Override
-	public Location findByCountryInJPA(String country) {
+	public Location findByIdInJPA(UUID id) {
 		for (Location lo : getAllLocationInJPA()) {
-			if (lo.getCountry().equals(country)) {
+			if (lo.getLocation_id().equals(id)) {
 				return lo;
 			}
 		}
@@ -78,9 +81,9 @@ public class LocationServiceImpl extends BaseService implements LocationService 
 	
 	//Delete in Cas
 	@Override
-	public void deleteLocationByCountry(String country) {
+	public void deleteLocationById(UUID id) {
 		for (LocationCas lo : getAllLocations()) {
-			if (lo.getCountry().equals(country)) {
+			if (lo.getLocationId().equals(id)) {
 				locationRepository.delete(lo);
 			}
 		}
@@ -99,8 +102,10 @@ public class LocationServiceImpl extends BaseService implements LocationService 
 	}
 
 	@Override
-	public Iterable<Location> getAllLocationInJPA() {
-		return jpaRepository.findAll();
+	public List<Location> getAllLocationInJPA() {
+		List<Location> a = new ArrayList<>();
+		jpaRepository.findAll().forEach(a::add);
+		return a;
 	}
 
 	@Override
@@ -129,7 +134,4 @@ public class LocationServiceImpl extends BaseService implements LocationService 
 	public void deleteAllLocationInCas() {
 		 locationRepository.deleteAll();;
 	}
-
-
-
 }

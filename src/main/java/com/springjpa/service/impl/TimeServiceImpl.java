@@ -4,6 +4,7 @@ package com.springjpa.service.impl;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 //import org.springframework.security.access.prepost.PreAuthorize;
@@ -32,30 +33,35 @@ public class TimeServiceImpl extends BaseService implements TimeService {
 
 	@Override
 	@Transactional(readOnly = true)
-	public Iterable<TimeCas> getAllTimes() {
-		return cassRepository.findAll();
+	public List<TimeCas> getAllTimes() {
+		List<TimeCas> list = new ArrayList<>();
+		cassRepository.findAll().forEach(list::add);
+		return list;
+		
 	}
 
 	@Override
-	public Iterable<Time> getAllTimeInJPA() {
-		return jpaRepository.findAll();
+	public List<Time> getAllTimeInJPA() {
+		List<Time> list = new ArrayList<>();
+		jpaRepository.findAll().forEach(list::add);
+		return list;
 	}
 
 	@Override
-	public List<TimeCas> findByYearInCas(int year) {
-		List<TimeCas> result = new ArrayList<>();
-		for (TimeCas lo : getAllTimes()) {
-			if (lo.getYear()==(year)) {
-				result.add(lo);
+	public TimeCas findByIdInCas(UUID id) {
+		TimeCas result = null;
+		for (TimeCas a : getAllTimes()) {
+			if (a.getTimeId().equals(id)) {
+				result  =  a;
 			}
 		}
 		return result;
 	}
 
 	@Override
-	public Time findByYearInJPA(int year) {
+	public Time findByIdInJPA(UUID id) {
 		for (Time lo : getAllTimeInJPA()) {
-			if (lo.getYear()==(year)) {
+			if (lo.getTimeId().equals(id)) {
 				return lo;
 			}
 		}
@@ -108,10 +114,11 @@ public class TimeServiceImpl extends BaseService implements TimeService {
 	}
 
 	@Override
-	public void deleteTimeByYear(int year) {
+	public void deleteTimeById(UUID id) {
 		for (TimeCas pro : getAllTimes()) {
-			if (pro.getYear()==(year)) {
+			if (pro.getTimeId().equals(id)) {
 				cassRepository.delete(pro);
+				break;
 			}
 		}
 	}

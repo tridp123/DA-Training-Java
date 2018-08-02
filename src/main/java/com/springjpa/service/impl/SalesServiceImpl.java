@@ -2,6 +2,8 @@ package com.springjpa.service.impl;
 
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 //import org.springframework.security.access.prepost.PreAuthorize;
@@ -28,8 +30,10 @@ public class SalesServiceImpl extends BaseService implements SalesService {
 	public SalesRepository jpaRepository;
 
 	@Override
-	public Iterable<SalesCas> getAllSalse() {
-		return cassRepository.findAll();
+	public List<SalesCas> getAllSalse() {
+		List<SalesCas> a = new ArrayList<SalesCas>();
+		cassRepository.findAll().forEach(a::add);
+		return a;
 	}
 
 	@Override
@@ -45,5 +49,10 @@ public class SalesServiceImpl extends BaseService implements SalesService {
 		sales.setDollars(dollars);
 		sales.setModifiedAt(new Timestamp(DataTimeUtil.getCurrent().getMillis()));
 		return jpaRepository.save(sales);
+	}
+
+	@Override
+	public SalesCas saveSalesCas(SalesCas sales) {
+		return cassRepository.save(sales);
 	}
 }

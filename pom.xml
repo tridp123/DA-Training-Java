@@ -5,11 +5,11 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.springjpa</groupId>
-	<artifactId>SpringJPA-PostgreSQ</artifactId>
+	<artifactId>DA-Training-java</artifactId>
 	<version>0.0.1</version>
 	<packaging>jar</packaging>
 
-	<name>SpringJPA-PostgreSQL</name>
+	<name>DA-Training-java</name>
 	<description>Demo project for Spring Boot JPA - PostgreSQL</description>
 
 	<parent>

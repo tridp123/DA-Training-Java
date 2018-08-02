@@ -1,6 +1,7 @@
 package com.springjpa.service;
 
 import java.util.List;
+import java.util.UUID;
 
 import com.springjpa.model.cassandra.ProductCas;
 import com.springjpa.model.jpa.Product;
@@ -8,10 +9,10 @@ import com.springjpa.model.jpa.Product;
 public interface ProductService {
 
 	// get
-	public Iterable<ProductCas> getAllProduct();
-	public Iterable<Product> getAllProductInJPA();
-	public List<ProductCas> findByClassInCas(String sClass);
-	public Product findByClassInJPA(String sClass);
+	public List<ProductCas> getAllProduct();
+	public List<Product> getAllProductInJPA();
+	public ProductCas findByIdInCas(UUID id);
+	public Product findByIdInJPA(UUID id);
 
 	// add
 	public ProductCas saveProductCas(ProductCas productCas);
@@ -24,7 +25,7 @@ public interface ProductService {
 	// dalete
 	public void deleteAllProductInCas();
 
-	public void deleteProductByClass(String sClass);
+	public void deleteProductById(UUID id);
 
 	// check Product
 	public boolean isExistsProductinCas(ProductCas productCas);

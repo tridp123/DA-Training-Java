@@ -1,6 +1,7 @@
 package com.springjpa.service;
 
 import java.util.List;
+import java.util.UUID;
 
 import com.springjpa.model.cassandra.LocationCas;
 import com.springjpa.model.jpa.Location;
@@ -8,11 +9,11 @@ import com.springjpa.model.jpa.Location;
 public interface LocationService {
 
 	//get
-	public Iterable<LocationCas> getAllLocations();
-	public Iterable<Location> getAllLocationInJPA();
+	public List<LocationCas> getAllLocations();
+	public List<Location> getAllLocationInJPA();
 	
-	public List<LocationCas> findByCountryInCas(String country);
-	public Location findByCountryInJPA(String country);
+	public LocationCas findByIdInCas(UUID id);
+	public Location findByIdInJPA(UUID id);
 
 	//add
 	public LocationCas saveLocationCas(LocationCas locationCas);
@@ -24,7 +25,7 @@ public interface LocationService {
 
 	//dalete
 	public void deleteAllLocationInCas();
-	public void deleteLocationByCountry(String country);
+	public void deleteLocationById(UUID id);
 	
 	//check location
 	public boolean isExistsLocation(LocationCas locationCas);
