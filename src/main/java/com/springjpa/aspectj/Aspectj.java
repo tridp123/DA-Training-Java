@@ -21,7 +21,7 @@ public class Aspectj {
 		LogUtil.info(logger, "Before method: " + joinPoint.getSignature().getName());
 	}
 
-	@After("execution(* com.springjpa.*.*(..))")
+	@After("execution(* com.springjpa.controller.*.*(..)) || execution(* com.springjpa.service.*.*(..))")
 	public void logAfter(JoinPoint joinPoint) {
 		Logger logger = LoggerFactory.getLogger(joinPoint.getTarget().getClass());
 		LogUtil.info(logger, "After method: " + joinPoint.getSignature().getName());
