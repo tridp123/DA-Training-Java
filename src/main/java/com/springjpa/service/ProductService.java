@@ -20,7 +20,7 @@ public interface ProductService {
 
 	// update
 	public ProductCas updateProductInCas(ProductCas product,int item, String sClass, String inventory);
-	public Product updateProductInJPA(Product Product, int item, String sClass, String inventory);
+	public Product updateProductInJPA(Product Product);
 
 	// dalete
 	public void deleteAllProductInCas();

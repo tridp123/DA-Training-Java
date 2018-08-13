@@ -20,8 +20,8 @@ public interface LocationService {
 	public Location saveLocationJPA(Location location);
 
 	//update
-	public LocationCas updateLocationInCas(LocationCas location,String country, String city);
-	public Location updateLocationInJPA(Location location,String country, String city);
+	public LocationCas updateLocationInCas(LocationCas location);
+	public Location updateLocationInJPA(Location location);
 
 	//dalete
 	public void deleteAllLocationInCas();

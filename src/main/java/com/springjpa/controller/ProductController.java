@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -130,13 +131,10 @@ public class ProductController {
 
 	// update JPA
 	@PutMapping(value = "/updateinjpa", headers = "Accept=application/json")
-	public ResponseEntity<ProductDTO> updateProduct(@RequestParam String productId, @RequestParam int item,
-			@RequestParam String sClass, @RequestParam String inventory, UriComponentsBuilder ucBuilder) {
-		Product pro = productService.findByIdInJPA(UUID.fromString(productId));
-		if (!productService.isExistsProductinJPA(pro)) {
-			return new ResponseEntity<ProductDTO>(HttpStatus.NOT_FOUND);
-		}
-		productService.updateProductInJPA(pro, item, sClass, inventory);
+	public ResponseEntity<ProductDTO> updateProduct(@RequestBody ProductDTO productDTO ,UriComponentsBuilder ucBuilder) {
+		Product pro = new Product();
+		pro = convertToJPAEntity(productDTO);
+		productService.updateProductInJPA(pro);
 
 		HttpHeaders headers = new HttpHeaders();
 		headers.setLocation(
@@ -242,4 +240,13 @@ public class ProductController {
 
 		return "Done";
 	}
+	
+	@PutMapping(value = "/update", headers = "Accept=application/json")
+	public ResponseEntity<ProductDTO> updateProduct(@RequestBody ProductDTO product) {
+		HttpHeaders headers = new HttpHeaders();
+		headers.add("Location", "http://localhost:8080/product?id=" + product.getProductId());
+		return new ResponseEntity<ProductDTO>(
+				convertToDTO(productService.updateProductInJPA(convertToJPAEntity(product)), DBType.JPA), headers, HttpStatus.OK);
+	}
+	
 }

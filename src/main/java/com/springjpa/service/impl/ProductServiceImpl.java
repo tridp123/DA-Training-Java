@@ -94,13 +94,10 @@ public class ProductServiceImpl extends BaseService implements ProductService {
 	}
 
 	@Override
-	public Product updateProductInJPA(Product product, int item, String sClass, String inventory) {
+	public Product updateProductInJPA(Product product) {
 		if ((jpaRepository.findById(product.getProductId()) == null)) {
 			throw new NoDataFoundException("Product ID '" + product.getProductId() + "' not found in DB");
 		}
-		product.setItem(item);
-		product.setsClass(sClass);
-		product.setInventory(inventory);
 		product.setModifiedAt(new Timestamp(DataTimeUtil.getCurrent().getMillis()));
 		return jpaRepository.save(product);
 	}

@@ -1,5 +1,6 @@
 package com.springjpa.controller;
 
+import java.net.URI;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,9 +20,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.springjpa.dto.LocationDTO;
@@ -45,18 +49,17 @@ public class LocationController {
 
 	public LocationController() {
 	}
-	
-	
+
 	public LocationController(LocationService locationRepository) {
 		super();
 		this.locationRepository = locationRepository;
 	}
 
-
 	/* get */
-	// -------------------Retrieve All location--------------------------------------------------------
+	// -------------------Retrieve All
+	// location--------------------------------------------------------
 	@GetMapping(value = "/getalllocationcas", headers = "Accept=application/json")
-	public  ResponseEntity<List<LocationDTO>> getAllLocationCas() {
+	public ResponseEntity<List<LocationDTO>> getAllLocationCas() {
 		List<LocationDTO> list = convertListLocationCas(locationRepository.getAllLocations());
 		return new ResponseEntity<List<LocationDTO>>(list, HttpStatus.OK);
 	}
@@ -73,7 +76,7 @@ public class LocationController {
 	public ResponseEntity<LocationDTO> getLocationCas(@PathVariable("locationId") String id) {
 		System.out.println("Fetching location with id " + id);
 		LocationCas locationCas = locationRepository.findByIdInCas(UUID.fromString(id));
-		if (locationCas==null) {
+		if (locationCas == null) {
 			return new ResponseEntity<LocationDTO>(HttpStatus.NOT_FOUND);
 		}
 		return new ResponseEntity<LocationDTO>(convertToDTO(locationCas, DBType.CASSANDRA), HttpStatus.OK);
@@ -92,7 +95,7 @@ public class LocationController {
 	}
 
 	// add location info Cas
-	@PostMapping(value = "/addlocation/addcas")
+	@PostMapping(value = "/addlocation/addcas", produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<LocationDTO> createLocation(@RequestParam String country, @RequestParam String city,
 			UriComponentsBuilder ucBuilder) {
 		LocationCas cas = new LocationCas(UUID.randomUUID(), country, city, DataTimeUtil.getCurrent(),
@@ -107,11 +110,11 @@ public class LocationController {
 		HttpHeaders headers = new HttpHeaders();
 		headers.setLocation(
 				ucBuilder.path("/location/getlocationcas/{locationId}").buildAndExpand(a.getLocationId()).toUri());
-		return new ResponseEntity<LocationDTO>(convertToDTO(a, DBType.CASSANDRA), headers, HttpStatus.CREATED);
+		return new ResponseEntity<LocationDTO>(convertToDTO(a, DBType.CASSANDRA), HttpStatus.CREATED);
 	}
 
 	// add location info JPA
-	@PostMapping(value = "/addlocation/addjpa")
+	@PostMapping(value = "/addlocation/addjpa", produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<Location> addLocationInJPA(@RequestParam String country, @RequestParam String city) {
 		Location loc = new Location(UUID.randomUUID(), country, city,
 				new Timestamp(DataTimeUtil.getCurrent().getMillis()),
@@ -123,35 +126,66 @@ public class LocationController {
 		}
 		Location a = locationRepository.saveLocationJPA(loc);
 
-		UriComponentsBuilder ucBuilder = 
+		UriComponentsBuilder uriComponents = UriComponentsBuilder.newInstance();
 		HttpHeaders headers = new HttpHeaders();
 		headers.setLocation(
-				ucBuilder.path("/location/getlocationjpa/{locationId}").buildAndExpand(a.getLocation_id()).toUri());
+				uriComponents.path("/location/getlocationjpa/{locationId}").buildAndExpand(a.getLocation_id()).toUri());
 		return new ResponseEntity<Location>(a, headers, HttpStatus.CREATED);
 	}
-	
-	//add all location from CAS into JPA
-	@PostMapping(value = "/addalllocation")
-	public ResponseEntity<List<Location>> saveAllCasIntoJPA(){
+
+	// add all location from CAS into JPA
+	@PostMapping(value = "/addalllocation", produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<List<Location>> saveAllCasIntoJPA() {
 		for (LocationDTO dto : convertListLocationCas(locationRepository.getAllLocations())) {
 			locationRepository.saveLocationJPA(convertToJPAEntity(dto));
 		}
 		return new ResponseEntity<List<Location>>(locationRepository.getAllLocationInJPA(), HttpStatus.CREATED);
 	}
 
+	// add location info Cas
+	@PostMapping(value = "/addlocationcas", produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<LocationCas> addProduct(@RequestBody LocationDTO create) {
+		LocationCas product = new LocationCas();
+		product = convertToCassandraEntity(create);
+		locationRepository.saveLocationCas(product);
+		URI location = ServletUriComponentsBuilder.fromCurrentServletMapping()
+				.path("/location/getlocationcas/{locationId}").build().expand(product.getLocationId()).toUri();
+		HttpHeaders headers = new HttpHeaders();
+		headers.setLocation(location);
+		ResponseEntity<LocationCas> entity = new ResponseEntity<LocationCas>(product, headers, HttpStatus.CREATED);
+		return entity;
+	}
+
+	// update cas
+	@PutMapping(value = "/updateincas", produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<LocationDTO> updateLocationInCas(@RequestBody LocationDTO value) {
+		
+		LocationCas loc = new LocationCas();
+		loc = convertToCassandraEntity(value);
+		locationRepository.updateLocationInCas(loc);
+		
+		URI location = ServletUriComponentsBuilder.fromCurrentServletMapping()
+				.path("/location/getlocationcas/{locationId}").build().expand(loc.getLocationId()).toUri();
+		HttpHeaders headers = new HttpHeaders();
+		headers.setLocation(location);
+		ResponseEntity<LocationDTO> entity = new ResponseEntity<LocationDTO>(convertToDTO(loc, DBType.CASSANDRA), headers, HttpStatus.CREATED);
+		
+		return entity;
+	}
+
 	// update JPA
 	@PutMapping(value = "/updateinjpa", headers = "Accept=application/json")
-	public ResponseEntity<LocationDTO> updateLocation( @RequestParam String id, @RequestParam String country,
-			@RequestParam String city, UriComponentsBuilder ucBuilder) {
-		Location loc = locationRepository.findByIdInJPA(UUID.fromString(id));
+	public ResponseEntity<LocationDTO> updateLocation(@RequestBody LocationDTO location) {
+		Location loc = convertToJPAEntity(location);
 		if (!locationRepository.isExistsLocationinJPA(loc)) {
 			return new ResponseEntity<LocationDTO>(HttpStatus.NOT_FOUND);
 		}
-		locationRepository.updateLocationInJPA(loc, country, city);
+		locationRepository.updateLocationInJPA(loc);
 
+		UriComponentsBuilder uriComponents = UriComponentsBuilder.newInstance();
 		HttpHeaders headers = new HttpHeaders();
-		headers.setLocation(
-				ucBuilder.path("/location/getlocationjpa/{locationId}").buildAndExpand(loc.getLocation_id()).toUri());
+		headers.setLocation(uriComponents.path("/location/getlocationjpa/{locationId}")
+				.buildAndExpand(loc.getLocation_id()).toUri());
 		return new ResponseEntity<LocationDTO>(convertToDTO(loc, DBType.JPA), headers, HttpStatus.OK);
 	}
 
@@ -161,9 +195,10 @@ public class LocationController {
 		locationRepository.deleteAllLocationInCas();
 		return new ResponseEntity<LocationDTO>(HttpStatus.NO_CONTENT);
 	}
+
 	//
 	@DeleteMapping(value = "/delete/{locationId}")
-	public ResponseEntity<LocationDTO>  deleteUser(@PathVariable("locationId") String id) {
+	public ResponseEntity<LocationDTO> deleteUser(@PathVariable("locationId") String id) {
 		locationRepository.deleteLocationById(UUID.fromString(id));
 		return new ResponseEntity<LocationDTO>(HttpStatus.NO_CONTENT);
 	}
@@ -230,17 +265,21 @@ public class LocationController {
 				dto.getModifiedAt());
 		return location;
 	}
-	public boolean compareLocation(LocationCas cas , LocationCas cas2) {
+
+	public boolean compareLocation(LocationCas cas, LocationCas cas2) {
 		return cas.getLocationId().equals(cas2.getLocationId());
 	}
-	
+
 	@RequestMapping("/initiallocation")
 	public String process() {
 		// save a Location info Cassandra
 		// sample data
-		LocationCas l1 = new LocationCas(UUID.randomUUID(), "USA", "New York", DataTimeUtil.getCurrent(), DataTimeUtil.getCurrent());
-		LocationCas l2 = new LocationCas(UUID.randomUUID(), "Japan", "Tokyo", DataTimeUtil.getCurrent(), DataTimeUtil.getCurrent());
-		LocationCas l3 = new LocationCas(UUID.randomUUID(), "Laos", "Vieng Chan", DataTimeUtil.getCurrent(), DataTimeUtil.getCurrent());
+		LocationCas l1 = new LocationCas(UUID.randomUUID(), "USA", "New York", DataTimeUtil.getCurrent(),
+				DataTimeUtil.getCurrent());
+		LocationCas l2 = new LocationCas(UUID.randomUUID(), "Japan", "Tokyo", DataTimeUtil.getCurrent(),
+				DataTimeUtil.getCurrent());
+		LocationCas l3 = new LocationCas(UUID.randomUUID(), "Laos", "Vieng Chan", DataTimeUtil.getCurrent(),
+				DataTimeUtil.getCurrent());
 		locationRepository.saveLocationCas(l1);
 		locationRepository.saveLocationCas(l2);
 		locationRepository.saveLocationCas(l3);
