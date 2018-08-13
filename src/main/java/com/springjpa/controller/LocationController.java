@@ -43,10 +43,20 @@ public class LocationController {
 	@Autowired
 	LocationService locationRepository = new LocationServiceImpl();
 
+	public LocationController() {
+	}
+	
+	
+	public LocationController(LocationService locationRepository) {
+		super();
+		this.locationRepository = locationRepository;
+	}
+
+
 	/* get */
 	// -------------------Retrieve All location--------------------------------------------------------
 	@GetMapping(value = "/getalllocationcas", headers = "Accept=application/json")
-	public ResponseEntity<List<LocationDTO>> getAllLocationCas() {
+	public  ResponseEntity<List<LocationDTO>> getAllLocationCas() {
 		List<LocationDTO> list = convertListLocationCas(locationRepository.getAllLocations());
 		return new ResponseEntity<List<LocationDTO>>(list, HttpStatus.OK);
 	}
@@ -102,22 +112,22 @@ public class LocationController {
 
 	// add location info JPA
 	@PostMapping(value = "/addlocation/addjpa")
-	public ResponseEntity<LocationDTO> addLocationInJPA(@RequestParam String country, @RequestParam String city,
-			UriComponentsBuilder ucBuilder) {
+	public ResponseEntity<Location> addLocationInJPA(@RequestParam String country, @RequestParam String city) {
 		Location loc = new Location(UUID.randomUUID(), country, city,
 				new Timestamp(DataTimeUtil.getCurrent().getMillis()),
 				new Timestamp(DataTimeUtil.getCurrent().getMillis()));
 
 		if (locationRepository.isExistsLocationinJPA(loc)) {
 			System.out.println("A location with name " + loc.getCountry() + " already exist");
-			return new ResponseEntity<LocationDTO>(HttpStatus.CONFLICT);
+			return new ResponseEntity<Location>(HttpStatus.CONFLICT);
 		}
 		Location a = locationRepository.saveLocationJPA(loc);
 
+		UriComponentsBuilder ucBuilder = 
 		HttpHeaders headers = new HttpHeaders();
 		headers.setLocation(
 				ucBuilder.path("/location/getlocationjpa/{locationId}").buildAndExpand(a.getLocation_id()).toUri());
-		return new ResponseEntity<LocationDTO>(convertToDTO(a, DBType.JPA), headers, HttpStatus.CREATED);
+		return new ResponseEntity<Location>(a, headers, HttpStatus.CREATED);
 	}
 	
 	//add all location from CAS into JPA
@@ -184,7 +194,7 @@ public class LocationController {
 		}
 		for (LocationCas lo : list) {
 			LocationDTO dto = convertToDTO(lo, DBType.CASSANDRA);
-			dto.getCreatedAt().withZone(DateTimeZone.UTC);
+//			dto.getCreatedAt().withZone(DateTimeZone.UTC);
 			listDTO.add(dto);
 		}
 		return listDTO;
@@ -219,6 +229,9 @@ public class LocationController {
 		LocationCas location = new LocationCas(dto.getLocationId(), dto.getCountry(), dto.getCity(), dto.getCreatedAt(),
 				dto.getModifiedAt());
 		return location;
+	}
+	public boolean compareLocation(LocationCas cas , LocationCas cas2) {
+		return cas.getLocationId().equals(cas2.getLocationId());
 	}
 	
 	@RequestMapping("/initiallocation")

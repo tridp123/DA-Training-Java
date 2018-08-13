@@ -49,6 +49,7 @@ public class LocationServiceImpl extends BaseService implements LocationService 
 	public boolean isExistsLocation(LocationCas locationCas) {
 		boolean result = false;
 		for (LocationCas lo : getAllLocations()) {
+			System.out.println("contry: "+lo.getCountry()+"/n"+"city: "+lo.getCity());
 			if ((lo.getCountry().equals(locationCas.getCountry())) && (lo.getCity().equals(locationCas.getCity()))) {
 				result = true;
 				break;
@@ -77,7 +78,6 @@ public class LocationServiceImpl extends BaseService implements LocationService 
 		}
 		return null;
 	}
-
 	
 	//Delete in Cas
 	@Override

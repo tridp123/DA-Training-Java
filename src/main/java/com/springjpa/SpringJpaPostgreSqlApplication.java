@@ -17,6 +17,7 @@ public class SpringJpaPostgreSqlApplication implements CommandLineRunner{
 	
 	public static void main(String[] args){
 		SpringApplication.run(SpringJpaPostgreSqlApplication.class, args);
+		
 	}
 
 	@Override
