@@ -58,7 +58,7 @@ public class ProductServiceImpl extends BaseService implements ProductService {
 	@Override
 	public Product findByIdInJPA(UUID id) {
 		for (Product lo : getAllProductInJPA()) {
-			if (lo.getsClass().equals(id)) {
+			if (lo.getProductId().equals(id)) {
 				return lo;
 			}
 		}

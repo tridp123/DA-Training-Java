@@ -27,12 +27,10 @@ public class LocationDTO {
 		this.modifiedAt = modifiedAt;
 	}
 
-	// @JsonIgnore
 	public UUID getLocationId() {
 		return locationId;
 	}
 
-	@JsonProperty
 	public void setLocationId(UUID locationId) {
 		this.locationId = locationId;
 	}
@@ -53,7 +51,6 @@ public class LocationDTO {
 		this.city = city;
 	}
 
-	// @JsonIgnore
 	public DateTime getCreatedAt() {
 		return createdAt;
 	}
@@ -63,7 +60,6 @@ public class LocationDTO {
 		this.createdAt = createdAt;
 	}
 
-	// @JsonIgnore
 	public DateTime getModifiedAt() {
 		return modifiedAt;
 	}

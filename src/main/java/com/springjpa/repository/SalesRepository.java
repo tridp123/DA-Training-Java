@@ -1,5 +1,6 @@
 package com.springjpa.repository;
 
+import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
@@ -8,6 +9,6 @@ import com.springjpa.model.jpa.SalesId;
 
 
 @Repository
-public interface SalesRepository extends CrudRepository<Sales, SalesId>{
+public interface SalesRepository extends CrudRepository<Sales, SalesId>,QuerydslPredicateExecutor<Sales> {
 
 }
